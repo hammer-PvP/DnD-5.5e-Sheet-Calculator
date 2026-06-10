@@ -24,18 +24,18 @@ function subclass(id, label, options) { return choice(id, label, 1, options); }
 
 
 const SPELLS = {
-  bard_cantrips: ['Friends','True Strike','Mending','Minor Illusion','Light','Mage Hand','Message','Sleight of Hand','Vicious Mockery'],
+  bard_cantrips: ['Friends','True Strike','Mending','Minor Illusion','Light','Mage Hand','Message','Vicious Mockery','Thunderclap (Xanathar)','Blade Ward','Dancing Lights','Elementalism','Prestidigitation','Starry Wisp'],
   bard_1: ['Command','Comprehend Languages','Cure Wounds','Detect Magic','Disguise Self','Dissonant Whispers','Speak with Animals','Faerie Fire','Heroism','Identify','Silent Image','Thunderwave','Healing Word','Feather Fall','Tasha’s Hideous Laughter','Sleep'],
-  warlock_cantrips: ['Friends','True Strike','Minor Illusion','Mage Hand','Sleight of Hand','Eldritch Blast','Chill Touch'],
+  warlock_cantrips: ['Friends','True Strike','Minor Illusion','Mage Hand','Eldritch Blast','Chill Touch','Booming Blade (Tasha)','Create Bonfire (Xanathar)','Frostbite (Xanathar)','Green-Flame Blade (Tasha)','Lightning Lure (Tasha)','Magic Stone (Xanathar)','Mind Sliver (Tasha)','Sword Burst (Tasha)','Thunderclap (Xanathar)','Toll the Dead (Xanathar)','Blade Ward','Poison Spray','Prestidigitation'],
   warlock_1: ['Armor of Agathys','Arms of Hadar','Comprehend Languages','Charm Person','Illusory Script','Protection from Evil and Good','Witch Bolt','Hellish Rebuke','Unseen Servant','Hex'],
-  cleric_cantrips: ['Sacred Flame','Spare the Dying','Light','Guidance','Resistance','Thaumaturgy'],
+  cleric_cantrips: ['Sacred Flame','Spare the Dying','Light','Guidance','Resistance','Thaumaturgy','Toll the Dead (Xanathar)','Word of Radiance (Xanathar)'],
   cleric_1: ['Bless','Command','Create or Destroy Water','Cure Wounds','Detect Magic','Detect Evil and Good','Detect Poison and Disease','Shield of Faith','Guidance','Inflict Wounds','Healing Word','Protection from Evil and Good','Purify Food and Drink','Sanctuary'],
-  druid_cantrips: ['Shillelagh','Thorn Whip','Mending','Produce Flame','Druidcraft','Guidance','Poison Spray','Resistance'],
+  druid_cantrips: ['Shillelagh','Thorn Whip','Mending','Produce Flame','Druidcraft','Guidance','Poison Spray','Resistance','Control Flames (Xanathar)','Create Bonfire (Xanathar)','Frostbite (Xanathar)','Gust (Xanathar)','Magic Stone (Xanathar)','Mold Earth (Xanathar)','Shape Water (Xanathar)','Thunderclap (Xanathar)','Elementalism','Starry Wisp'],
   druid_1: ['Animal Friendship','Goodberry','Create or Destroy Water','Cure Wounds','Detect Magic','Entangle','Speak with Animals','Faerie Fire','Fog Cloud','Thunderwave','Healing Word','Longstrider','Purify Food and Drink'],
-  sorcerer_cantrips: ['Friends','True Strike','Acid Splash','Shocking Grasp','Mending','Minor Illusion','Light','Mage Hand','Message','Sleight of Hand','Fire Bolt','Chill Touch'],
+  sorcerer_cantrips: ['Friends','True Strike','Acid Splash','Shocking Grasp','Mending','Minor Illusion','Light','Mage Hand','Message','Fire Bolt','Chill Touch','Booming Blade (Tasha)','Control Flames (Xanathar)','Create Bonfire (Xanathar)','Frostbite (Xanathar)','Green-Flame Blade (Tasha)','Gust (Xanathar)','Lightning Lure (Tasha)','Mind Sliver (Tasha)','Mold Earth (Xanathar)','Shape Water (Xanathar)','Sword Burst (Tasha)','Thunderclap (Xanathar)','Blade Ward','Dancing Lights','Elementalism','Poison Spray','Prestidigitation','Ray of Frost','Sorcerous Burst'],
   sorcerer_1: ['Mage Armor','Comprehend Languages','Detect Magic','Disguise Self','Charm Person','Shield','Magic Missile','Fog Cloud','Thunderwave','Feather Fall','Witch Bolt','Sleep'],
   ranger_1: ['Animal Friendship','Goodberry','Cure Wounds','Detect Magic','Entangle','Speak with Animals','Hunter’s Mark','Fog Cloud','Longstrider','Jump'],
-  wizard_cantrips: ['Friends','True Strike','Acid Splash','Shocking Grasp','Mending','Minor Illusion','Light','Mage Hand','Message','Sleight of Hand','Fire Bolt','Chill Touch'],
+  wizard_cantrips: ['Friends','True Strike','Acid Splash','Shocking Grasp','Mending','Minor Illusion','Light','Mage Hand','Message','Fire Bolt','Chill Touch','Booming Blade (Tasha)','Control Flames (Xanathar)','Create Bonfire (Xanathar)','Frostbite (Xanathar)','Green-Flame Blade (Tasha)','Gust (Xanathar)','Lightning Lure (Tasha)','Mind Sliver (Tasha)','Mold Earth (Xanathar)','Shape Water (Xanathar)','Sword Burst (Tasha)','Thunderclap (Xanathar)','Toll the Dead (Xanathar)','Blade Ward','Dancing Lights','Elementalism','Poison Spray','Prestidigitation','Ray of Frost'],
   wizard_1: ['Alarm','Mage Armor','Comprehend Languages','Detect Magic','Disguise Self','Charm Person','Shield','Illusory Script','Identify','Silent Image','Magic Missile','Fog Cloud','Thunderwave','Feather Fall','Witch Bolt','Tasha’s Hideous Laughter','Unseen Servant','Sleep'],
   paladin_1: ['Bless','Command','Cure Wounds','Detect Magic','Detect Evil and Good','Divine Smite','Shield of Faith','Heroism','Protection from Evil and Good','Purify Food and Drink'],
 };
@@ -58,7 +58,7 @@ const WARLOCK_INVOCATIONS = [
 ];
 
 const PLANNER_DATA = {
-  version: 'beta-0.1.103-en-us',
+  version: 'beta-0.1.119-en-us',
   note: 'v0.5: spell lists separated by class; Warlock Pact Magic and Eldritch Invocations revised.',
   classes: [
     { id:'barbarian', name:'Barbarian', source:'Player’s Handbook 2024', pageRef:'p. 51', levels:{
@@ -237,7 +237,7 @@ PLANNER_DATA.feats = [
 
 
 // v0.6 — PHB 2024/5.5e species and short feature descriptions.
-PLANNER_DATA.version = 'beta-0.1.103-en-us';
+PLANNER_DATA.version = 'beta-0.1.119-en-us';
 PLANNER_DATA.note = 'beta 0.1.103 EN-US: broader spell hover coverage across class spell lists, cantrip progression dice, spell stat-block framework, Thirsting Blade level gate, and Battle Master maneuver selectors.';
 PLANNER_DATA.species = [
   {id:'aasimar', name:'Aasimar', size:'Small or Medium', speed:'30 ft.', summary:'Celestial resistances, healing, and a level 3 transformation.', levels:{
@@ -257,11 +257,11 @@ PLANNER_DATA.species = [
     5:[F('elven_lineage_spell_5','Improved Elven Lineage Spell','species',{desc:'The chosen lineage grants an additional higher-level spell.'})]
   }},
   {id:'gnome', name:'Gnome', size:'Small', speed:'30 ft.', summary:'magical cunning and gnomish lineage.', levels:{
-    1:[F('darkvision','Darkvision','species',{desc:'You can see in darkness within the range specified by your species.'}),F('gnomish_cunning','Gnomish Cunning','species',{desc:'Vantagem em salvaguardas de Intelligence, Wisdom e Charisma.'}),choice('gnomish_lineage','Gnomish Lineage',1,['Rock Gnome','Forest Gnome'])]
+    1:[F('darkvision','Darkvision','species',{desc:'You can see in darkness within the range specified by your species.'}),F('gnomish_cunning','Gnomish Cunning','species',{desc:'Advantage on Intelligence, Wisdom, and Charisma saving throws.'}),choice('gnomish_lineage','Gnomish Lineage',1,['Rock Gnome','Forest Gnome'])]
   }},
   {id:'goliath', name:'Goliath', size:'Medium', speed:'35 ft.', summary:'Giant ancestry, powerful build, and Large Form at level 5.', levels:{
     1:[choice('giant_ancestry','Giant Ancestry',1,['Frost Giant','Fire Giant','Stone Giant','Cloud Giant','Hill Giant','Storm Giant']),F('powerful_build','Powerful Build','species',{desc:'Counts as larger for carrying capacity and has advantage against Grappled.'})],
-    5:[F('large_form','Large Form','species',{desc:'Aumenta temporariamente para Grande, com vantagem em Strength e deslocamento maior.'})]
+    5:[F('large_form','Large Form','species',{desc:'Temporarily become Large, gain Advantage on Strength checks, and increase your Speed.'})]
   }},
   {id:'human', name:'Human', size:'Small or Medium', speed:'30 ft.', summary:'Versatile, skillful, and gains Heroic Inspiration after a Long Rest.', levels:{
     1:[F('resourceful','Resourceful','species',{desc:'Gain Heroic Inspiration when you finish a Long Rest.'}),choice('skillful_species','Skillful',1,COMMON.skills),choice('versatile_origin_feat','Versatile — Origin Feat',1,['Skilled','Lucky','Musician','Alert','Healer','Tough','Crafter','Tavern Brawler'])]
@@ -281,7 +281,7 @@ PLANNER_DATA.species = [
 
 PLANNER_DATA.featureDescriptions = Object.assign({}, PLANNER_DATA.featureDescriptions || {}, {
   rage:'Enter a rage to improve combat power and resilience as described by the class.',
-  unarmored_defense:'Calcula defesa sem armadura usando atributos da classe.',
+  unarmored_defense:'Calculate defense without armor using the class formula.',
   spellcasting:'Unlocks spellcasting and class spell choices.',
   pact_magic:'Warlock-specific magic system with Pact Magic spell slots.',
   invocations:'Special Warlock choices that grant powers, spells, or pact features.',
@@ -289,13 +289,13 @@ PLANNER_DATA.featureDescriptions = Object.assign({}, PLANNER_DATA.featureDescrip
   bardic_inspiration:'An inspiration die used to help allies.',
   expertise:'Choose skills to double your Proficiency Bonus.',
   jack_of_all_trades:'Improves checks in which you lack proficiency.',
-  fighting_style:'Choice um estilo de combate da classe.',
+  fighting_style:'Choose a class Fighting Style.',
   second_wind:'Limited Hit Point recovery.',
   action_surge:'Allows a burst of additional action in combat.',
   extra_attack:'Allows more than one attack when you take the Attack action.',
   sneak_attack:'Extra Rogue damage when the conditions are met.',
   cunning_action:'Uses quick mobility and stealth actions.',
-  lay_on_hands:'Reserva de cura do Paladin.',
+  lay_on_hands:'Paladin healing pool.',
   divine_smite:'Canaliza poder divino em ataques.',
   wild_shape:'Assume forms or channel Wild Shape uses.',
   martial_arts:'Base unarmed combat system of the Monk.',
@@ -431,6 +431,6 @@ PLANNER_DATA.featureDescriptions = Object.assign({}, PLANNER_DATA.featureDescrip
    ['paladin',5,'paladin_2'],['paladin',9,'paladin_3'],['paladin',17,'paladin_5']
   ].forEach(([classId, lvl, key]) => addLevelFeature(classId, lvl, spellList(`supp_${key}`, `Supplement spells — ${key.split('_').pop()}º level`, SPELLS[key] || [])));
 
-  PLANNER_DATA.version = 'beta-0.1.103-en-us';
+  PLANNER_DATA.version = 'beta-0.1.119-en-us';
   PLANNER_DATA.note = 'beta 0.1.103 EN-US: broader spell hover coverage across class spell lists, cantrip progression dice, spell stat-block framework, Thirsting Blade level gate, and Battle Master maneuver selectors.';
 })();

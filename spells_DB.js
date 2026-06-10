@@ -1,4 +1,4 @@
-// beta 0.1.109 EN-US — canonical consolidated spell database.
+// beta 0.1.118 EN-US — canonical consolidated spell database.
 // This single file contains spell stat blocks, class/subclass tags, and spell registry helpers.
 // Do not create a second spell list DB; planner dropdowns and Spell Reference both read from this file.
 
@@ -175,6 +175,34 @@ window.SPELLS_DB = {
   });
 })();
 
+
+// beta 0.1.118 EN-US — Spell Audit v2 guard.
+// Prevents skills/non-spells from entering Spell Reference or planner spell dropdowns.
+(function spellAuditV2_nonSpellGuard_0_1_118(){
+  window.NON_SPELL_ENTRIES = new Set([
+    'Acrobatics','Animal Handling','Arcana','Athletics','Deception','Stealth','History',
+    'Intimidation','Insight','Investigation','Medicine','Nature','Perception','Persuasion',
+    'Sleight of Hand','Religion','Survival','Performance'
+  ]);
+
+  if (window.SPELLS_DB) {
+    window.NON_SPELL_ENTRIES.forEach(name => {
+      if (window.SPELLS_DB[name]) delete window.SPELLS_DB[name];
+    });
+  }
+
+  if (typeof SPELLS === 'object') {
+    Object.keys(SPELLS).forEach(key => {
+      if (Array.isArray(SPELLS[key])) {
+        SPELLS[key] = SPELLS[key].filter(raw => {
+          const clean = String(raw || '').replace(/\s*\([^)]*\)\s*$/,'').trim();
+          return !window.NON_SPELL_ENTRIES.has(clean);
+        });
+      }
+    });
+  }
+})();
+
 // beta 0.1.108 EN-US — consolidated offline spell registry.
 // This turns SPELLS_DB into the single spell lookup source for both the planner dropdowns
 // and the Spell Reference tab. Class lists are stored as metadata on each spell entry.
@@ -330,6 +358,7 @@ window.SPELLS_DB = {
       const out=[];
       const seen=new Set();
       Object.entries(window.SPELLS_DB).forEach(([name, entry]) => {
+        if (window.NON_SPELL_ENTRIES && window.NON_SPELL_ENTRIES.has(String(name).replace(/\s*\([^)]*\)\s*$/,'').trim())) return;
         const levels=(entry.classes && entry.classes[cls]) || [];
         if (!levels.length) return;
         const lvl=dbLevelNum(entry);
@@ -345,3 +374,301 @@ window.SPELLS_DB = {
     }
   };
 })();
+
+
+// beta 0.1.118 EN-US — supplemental cantrip audit pass.
+// Adds missing Tasha/Xanathar cantrips to the canonical offline spell DB,
+// including character-level damage progression where applicable.
+(function supplementalCantripAudit_0_1_116(){
+  window.SPELLS_DB = window.SPELLS_DB || {};
+
+  const entries = {
+    "Booming Blade": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"Self (5-ft. radius)", components:"S, M", duration:"1 round",
+      attack:"Melee weapon attack", damage:"Thunder", source:"Tasha",
+      cantripProgression:["Level 1: weapon damage; movement damage 1d8 Thunder","Level 5: +1d8 Thunder on hit; movement damage 2d8 Thunder","Level 11: +2d8 Thunder on hit; movement damage 3d8 Thunder","Level 17: +3d8 Thunder on hit; movement damage 4d8 Thunder"],
+      text:"Make one melee weapon attack against a creature within 5 feet. On a hit, the target suffers the attack's normal effects and is sheathed in booming energy; if it willingly moves before the spell ends, it takes Thunder damage."
+    },
+    "Green-Flame Blade": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"Self (5-ft. radius)", components:"S, M", duration:"Instantaneous",
+      attack:"Melee weapon attack", damage:"Fire", source:"Tasha",
+      cantripProgression:["Level 1: weapon damage; secondary Fire damage = spellcasting ability modifier","Level 5: +1d8 Fire on hit; secondary 1d8 + ability modifier","Level 11: +2d8 Fire on hit; secondary 2d8 + ability modifier","Level 17: +3d8 Fire on hit; secondary 3d8 + ability modifier"],
+      text:"Make one melee weapon attack. On a hit, the target suffers the attack's normal effects and green fire can leap to a second creature within 5 feet."
+    },
+    "Sword Burst": {
+      level:"Cantrip", school:"Conjuration", casting:"Action", range:"Self (5-ft. radius)", components:"V", duration:"Instantaneous",
+      save:"Dexterity", damage:"Force", source:"Tasha",
+      cantripProgression:["Level 1: 1d6","Level 5: 2d6","Level 11: 3d6","Level 17: 4d6"],
+      text:"Each creature of your choice within 5 feet must make a Dexterity save or take Force damage."
+    },
+    "Lightning Lure": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"Self (15-ft. radius)", components:"V", duration:"Instantaneous",
+      save:"Strength", damage:"Lightning", source:"Tasha",
+      cantripProgression:["Level 1: 1d8","Level 5: 2d8","Level 11: 3d8","Level 17: 4d8"],
+      text:"Target creature within range makes a Strength save. On a failed save, it is pulled toward you and can take Lightning damage if it ends close enough."
+    },
+    "Mind Sliver": {
+      level:"Cantrip", school:"Enchantment", casting:"Action", range:"60 ft.", components:"V", duration:"1 round",
+      save:"Intelligence", damage:"Psychic", source:"Tasha",
+      cantripProgression:["Level 1: 1d6","Level 5: 2d6","Level 11: 3d6","Level 17: 4d6"],
+      text:"Target makes an Intelligence save or takes Psychic damage and subtracts 1d4 from the next saving throw it makes before the end of your next turn."
+    },
+    "Toll the Dead": {
+      level:"Cantrip", school:"Necromancy", casting:"Action", range:"60 ft.", components:"V, S", duration:"Instantaneous",
+      save:"Wisdom", damage:"Necrotic", source:"Xanathar",
+      cantripProgression:["Level 1: 1d8, or 1d12 if target is missing HP","Level 5: 2d8 / 2d12","Level 11: 3d8 / 3d12","Level 17: 4d8 / 4d12"],
+      text:"Target makes a Wisdom save or takes Necrotic damage. Damage die is d12 if the target is missing any Hit Points."
+    },
+    "Word of Radiance": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"Self (5-ft. radius)", components:"V, M", duration:"Instantaneous",
+      save:"Constitution", damage:"Radiant", source:"Xanathar",
+      cantripProgression:["Level 1: 1d6","Level 5: 2d6","Level 11: 3d6","Level 17: 4d6"],
+      text:"Each creature of your choice within 5 feet makes a Constitution save or takes Radiant damage."
+    },
+    "Create Bonfire": {
+      level:"Cantrip", school:"Conjuration", casting:"Action", range:"60 ft.", components:"V, S", duration:"Concentration, up to 1 minute",
+      save:"Dexterity", damage:"Fire", source:"Xanathar",
+      cantripProgression:["Level 1: 1d8","Level 5: 2d8","Level 11: 3d8","Level 17: 4d8"],
+      text:"Create a bonfire in a 5-foot cube. A creature in the space must make a Dexterity save or take Fire damage."
+    },
+    "Frostbite": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"60 ft.", components:"V, S", duration:"Instantaneous",
+      save:"Constitution", damage:"Cold", source:"Xanathar",
+      cantripProgression:["Level 1: 1d6","Level 5: 2d6","Level 11: 3d6","Level 17: 4d6"],
+      text:"Target makes a Constitution save or takes Cold damage and has disadvantage on the next weapon attack roll it makes before the end of its next turn."
+    },
+    "Magic Stone": {
+      level:"Cantrip", school:"Transmutation", casting:"Bonus Action", range:"Touch", components:"V, S", duration:"1 minute",
+      attack:"Ranged spell attack", damage:"1d6 + spellcasting ability modifier Bludgeoning", source:"Xanathar",
+      text:"Imbue up to three pebbles. A creature can make a ranged spell attack with one, dealing magical Bludgeoning damage."
+    },
+    "Thunderclap": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"Self (5-ft. radius)", components:"S", duration:"Instantaneous",
+      save:"Constitution", damage:"Thunder", source:"Xanathar",
+      cantripProgression:["Level 1: 1d6","Level 5: 2d6","Level 11: 3d6","Level 17: 4d6"],
+      text:"Each creature within 5 feet, other than you, makes a Constitution save or takes Thunder damage."
+    },
+    "Control Flames": {
+      level:"Cantrip", school:"Transmutation", casting:"Action", range:"60 ft.", components:"S", duration:"Instantaneous or 1 hour",
+      source:"Xanathar", text:"Manipulate nonmagical flame within range using one of the spell's listed effects."
+    },
+    "Mold Earth": {
+      level:"Cantrip", school:"Transmutation", casting:"Action", range:"30 ft.", components:"S", duration:"Instantaneous or 1 hour",
+      source:"Xanathar", text:"Manipulate loose earth or stone within range using one of the spell's listed effects."
+    },
+    "Shape Water": {
+      level:"Cantrip", school:"Transmutation", casting:"Action", range:"30 ft.", components:"S", duration:"Instantaneous or 1 hour",
+      source:"Xanathar", text:"Manipulate water within range using one of the spell's listed effects."
+    },
+    "Gust": {
+      level:"Cantrip", school:"Transmutation", casting:"Action", range:"30 ft.", components:"V, S", duration:"Instantaneous",
+      save:"Strength", source:"Xanathar", text:"Create a small gust of air that can push a creature, move an object, or create a minor sensory effect within range."
+    }
+  };
+
+  const classMap = {
+    "Booming Blade":["Sorcerer","Warlock","Wizard","Artificer"],
+    "Green-Flame Blade":["Sorcerer","Warlock","Wizard","Artificer"],
+    "Sword Burst":["Sorcerer","Warlock","Wizard","Artificer"],
+    "Lightning Lure":["Sorcerer","Warlock","Wizard","Artificer"],
+    "Mind Sliver":["Sorcerer","Warlock","Wizard"],
+    "Toll the Dead":["Cleric","Warlock","Wizard"],
+    "Word of Radiance":["Cleric"],
+    "Create Bonfire":["Druid","Sorcerer","Warlock","Wizard","Artificer"],
+    "Frostbite":["Druid","Sorcerer","Warlock","Wizard","Artificer"],
+    "Magic Stone":["Druid","Warlock","Artificer"],
+    "Thunderclap":["Bard","Druid","Sorcerer","Warlock","Wizard","Artificer"],
+    "Control Flames":["Druid","Sorcerer","Wizard","Artificer"],
+    "Mold Earth":["Druid","Sorcerer","Wizard","Artificer"],
+    "Shape Water":["Druid","Sorcerer","Wizard","Artificer"],
+    "Gust":["Druid","Sorcerer","Wizard","Artificer"]
+  };
+
+  Object.entries(entries).forEach(([name, entry]) => {
+    const prev = window.SPELLS_DB[name] || {};
+    window.SPELLS_DB[name] = Object.assign({}, prev, entry);
+    const spell = window.SPELLS_DB[name];
+    spell.id = spell.id || name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    spell.sources = Array.from(new Set([...(Array.isArray(prev.sources)?prev.sources:[]), entry.source].filter(Boolean)));
+    spell.classes = spell.classes || {};
+    spell.validationTags = Array.isArray(spell.validationTags) ? spell.validationTags : [];
+    (classMap[name] || []).forEach(cls => {
+      spell.classes[cls] = Array.isArray(spell.classes[cls]) ? spell.classes[cls] : [];
+      if (!spell.classes[cls].includes(0)) spell.classes[cls].push(0);
+      spell.validationTags.push(`${cls}:cantrip`);
+    });
+    spell.validationTags = Array.from(new Set(spell.validationTags)).sort();
+  });
+})();
+
+
+
+// beta 0.1.118 EN-US — missing spell audit pass.
+// Completes core PHB 2024 cantrip tooltips and class tags that were still missing
+// or showing "Pending validation" style output. This does not create a second DB.
+(function missingSpellAudit_0_1_117(){
+  window.SPELLS_DB = window.SPELLS_DB || {};
+
+  const spellFixes = {
+    "Blade Ward": {
+      level:"Cantrip", school:"Abjuration", casting:"Action", range:"Self", components:"V, S",
+      duration:"Concentration, up to 1 minute", source:"PHB 2024",
+      text:"Whenever a creature makes an attack roll against you before the spell ends, the attacker subtracts 1d4 from the attack roll."
+    },
+    "Dancing Lights": {
+      level:"Cantrip", school:"Illusion", casting:"Action", range:"120 ft.", components:"V, S, M",
+      duration:"Concentration, up to 1 minute", source:"PHB 2024",
+      text:"Create up to four torch-sized lights within range. They can move as a Bonus Action and must remain within range of the spell."
+    },
+    "Elementalism": {
+      level:"Cantrip", school:"Transmutation", casting:"Action", range:"30 ft.", components:"V, S",
+      duration:"Instantaneous", source:"PHB 2024",
+      text:"Create a minor elemental effect involving air, earth, fire, or water within range."
+    },
+    "Poison Spray": {
+      level:"Cantrip", school:"Necromancy", casting:"Action", range:"30 ft.", components:"V, S",
+      duration:"Instantaneous", save:"Constitution", damage:"Poison", source:"PHB 2024",
+      cantripProgression:["Level 1: 1d12","Level 5: 2d12","Level 11: 3d12","Level 17: 4d12"],
+      text:"Target makes a Constitution save or takes Poison damage."
+    },
+    "Prestidigitation": {
+      level:"Cantrip", school:"Transmutation", casting:"Action", range:"10 ft.", components:"V, S",
+      duration:"Up to 1 hour", source:"PHB 2024",
+      text:"Create a harmless minor magical effect, sensory effect, cleaning/soiling effect, flavoring, small mark, or similar minor trick within the spell limits."
+    },
+    "Ray of Frost": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"60 ft.", components:"V, S",
+      duration:"Instantaneous", attack:"Ranged spell attack", damage:"Cold", source:"PHB 2024",
+      cantripProgression:["Level 1: 1d8","Level 5: 2d8","Level 11: 3d8","Level 17: 4d8"],
+      text:"On hit, target takes Cold damage and its Speed is reduced by 10 feet until the start of your next turn."
+    },
+    "Sorcerous Burst": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"120 ft.", components:"V, S",
+      duration:"Instantaneous", attack:"Ranged spell attack", damage:"Acid, Cold, Fire, Lightning, Poison, Psychic, or Thunder", source:"PHB 2024",
+      cantripProgression:["Level 1: 1d8","Level 5: 2d8","Level 11: 3d8","Level 17: 4d8"],
+      text:"Choose one listed damage type and make a ranged spell attack. On hit, target takes damage of the chosen type."
+    },
+    "Starry Wisp": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"60 ft.", components:"V, S",
+      duration:"Instantaneous", attack:"Ranged spell attack", damage:"Radiant", source:"PHB 2024",
+      cantripProgression:["Level 1: 1d8","Level 5: 2d8","Level 11: 3d8","Level 17: 4d8"],
+      text:"On hit, target takes Radiant damage and emits Dim Light; it can't benefit from the Invisible condition until the start of your next turn."
+    },
+    "Vicious Mockery": {
+      level:"Cantrip", school:"Enchantment", casting:"Action", range:"60 ft.", components:"V",
+      duration:"Instantaneous", save:"Wisdom", damage:"Psychic", source:"PHB 2024",
+      cantripProgression:["Level 1: 1d6","Level 5: 2d6","Level 11: 3d6","Level 17: 4d6"],
+      text:"Target makes a Wisdom save or takes Psychic damage and has disadvantage on the next attack roll it makes before the end of its next turn."
+    },
+    "Guidance": {
+      level:"Cantrip", school:"Divination", casting:"Reaction", range:"Touch", components:"V, S",
+      duration:"Concentration, up to 1 minute", source:"PHB 2024",
+      text:"When the target fails an ability check, it can roll 1d4 and add it to the check, potentially turning the failure into a success."
+    },
+    "Resistance": {
+      level:"Cantrip", school:"Abjuration", casting:"Reaction", range:"Touch", components:"V, S",
+      duration:"Concentration, up to 1 minute", source:"PHB 2024",
+      text:"When the target fails a saving throw, it can roll 1d4 and add it to the save, potentially turning the failure into a success."
+    },
+    "Sacred Flame": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"60 ft.", components:"V, S",
+      duration:"Instantaneous", save:"Dexterity", damage:"Radiant", source:"PHB 2024",
+      cantripProgression:["Level 1: 1d8","Level 5: 2d8","Level 11: 3d8","Level 17: 4d8"],
+      text:"Target makes a Dexterity save or takes Radiant damage. The target gains no benefit from Half Cover or Three-Quarters Cover for this save."
+    },
+    "Shocking Grasp": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"Touch", components:"V, S",
+      duration:"Instantaneous", attack:"Melee spell attack", damage:"Lightning", source:"PHB 2024",
+      cantripProgression:["Level 1: 1d8","Level 5: 2d8","Level 11: 3d8","Level 17: 4d8"],
+      text:"On hit, target takes Lightning damage and can't make Opportunity Attacks until the start of its next turn."
+    },
+    "Spare the Dying": {
+      level:"Cantrip", school:"Necromancy", casting:"Action", range:"15 ft.", components:"V, S",
+      duration:"Instantaneous", source:"PHB 2024",
+      text:"One creature with 0 Hit Points becomes Stable."
+    },
+    "Thaumaturgy": {
+      level:"Cantrip", school:"Transmutation", casting:"Action", range:"30 ft.", components:"V",
+      duration:"Up to 1 minute", source:"PHB 2024",
+      text:"Create one of several minor wondrous effects within range."
+    },
+    "Mending": {
+      level:"Cantrip", school:"Transmutation", casting:"1 minute", range:"Touch", components:"V, S, M",
+      duration:"Instantaneous", source:"PHB 2024",
+      text:"Repair a single break or tear in an object you touch, within the spell limits."
+    },
+    "Message": {
+      level:"Cantrip", school:"Transmutation", casting:"Action", range:"120 ft.", components:"S, M",
+      duration:"1 round", source:"PHB 2024",
+      text:"Point toward a creature and whisper a message that only the target hears; the target can reply in a whisper."
+    },
+    "Minor Illusion": {
+      level:"Cantrip", school:"Illusion", casting:"Action", range:"30 ft.", components:"S, M",
+      duration:"1 minute", source:"PHB 2024",
+      text:"Create a sound or image within range, following the spell's limits."
+    },
+    "Light": {
+      level:"Cantrip", school:"Evocation", casting:"Action", range:"Touch", components:"V, M",
+      duration:"1 hour", source:"PHB 2024",
+      text:"Touch one Large or smaller object; it sheds Bright Light and Dim Light as described by the spell."
+    },
+    "Mage Hand": {
+      level:"Cantrip", school:"Conjuration", casting:"Action", range:"30 ft.", components:"V, S",
+      duration:"1 minute", source:"PHB 2024",
+      text:"Create a spectral hand that can manipulate objects within the spell's limits."
+    },
+    "Friends": {
+      level:"Cantrip", school:"Enchantment", casting:"Action", range:"10 ft.", components:"S, M",
+      duration:"Concentration, up to 1 minute", source:"PHB 2024",
+      text:"Target one creature that isn't hostile to you. You have Advantage on Charisma checks directed at it for the duration."
+    },
+    "True Strike": {
+      level:"Cantrip", school:"Divination", casting:"Action", range:"Self", components:"S, M",
+      duration:"Instantaneous", damage:"Weapon damage; can become Radiant", source:"PHB 2024",
+      cantripProgression:["Level 1: weapon damage","Level 5: +1d6 Radiant","Level 11: +2d6 Radiant","Level 17: +3d6 Radiant"],
+      text:"Make one attack with the weapon used in the spell's casting, using your spellcasting ability for the attack and damage rolls if desired."
+    }
+  };
+
+  const classTags = {
+    "Blade Ward":["Bard","Sorcerer","Warlock","Wizard"],
+    "Dancing Lights":["Bard","Sorcerer","Wizard"],
+    "Elementalism":["Bard","Druid","Sorcerer","Wizard"],
+    "Poison Spray":["Druid","Sorcerer","Warlock","Wizard"],
+    "Prestidigitation":["Bard","Sorcerer","Warlock","Wizard"],
+    "Ray of Frost":["Sorcerer","Wizard"],
+    "Sorcerous Burst":["Sorcerer"],
+    "Starry Wisp":["Bard","Druid"],
+    "Vicious Mockery":["Bard"],
+    "Guidance":["Cleric","Druid"],
+    "Resistance":["Cleric","Druid"],
+    "Sacred Flame":["Cleric"],
+    "Shocking Grasp":["Sorcerer","Wizard"],
+    "Spare the Dying":["Cleric"],
+    "Thaumaturgy":["Cleric"],
+    "Mending":["Bard","Cleric","Druid","Sorcerer","Wizard"],
+    "Message":["Bard","Sorcerer","Wizard"],
+    "Minor Illusion":["Bard","Sorcerer","Warlock","Wizard"],
+    "Light":["Bard","Cleric","Sorcerer","Wizard"],
+    "Mage Hand":["Bard","Sorcerer","Warlock","Wizard"],
+    "Friends":["Bard","Sorcerer","Warlock","Wizard"],
+    "True Strike":["Bard","Sorcerer","Warlock","Wizard"]
+  };
+
+  Object.entries(spellFixes).forEach(([name, fix]) => {
+    const prev = window.SPELLS_DB[name] || {};
+    window.SPELLS_DB[name] = Object.assign({}, prev, fix);
+    const spell = window.SPELLS_DB[name];
+    spell.id = spell.id || name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    spell.classes = spell.classes || {};
+    spell.sources = Array.from(new Set([...(Array.isArray(prev.sources)?prev.sources:[]), fix.source].filter(Boolean)));
+    spell.validationTags = Array.isArray(spell.validationTags) ? spell.validationTags : [];
+    (classTags[name] || []).forEach(cls => {
+      spell.classes[cls] = Array.isArray(spell.classes[cls]) ? spell.classes[cls] : [];
+      if (!spell.classes[cls].includes(0)) spell.classes[cls].push(0);
+      spell.validationTags.push(`${cls}:cantrip`);
+    });
+    spell.validationTags = Array.from(new Set(spell.validationTags)).sort();
+  });
+})();
+

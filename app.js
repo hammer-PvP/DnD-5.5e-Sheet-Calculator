@@ -169,7 +169,32 @@ function renderOrigin(){
 
 function renderSpeciesDetails(){
   const sp = currentSpecies(); const box = $('speciesDetails'); if (!box || !sp) return;
-  box.innerHTML = `<div class="originInfo"><b>${sp.name}</b> — ${sp.size || 'Variable size'} | Speed: ${sp.speed || '30 ft.'}<br>${sp.summary || ''}</div>`;
+  box.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'originInfo speciesInfo';
+  const top = document.createElement('div');
+  top.innerHTML = `<b>${sp.name}</b> — ${sp.size || 'Variable size'} | Speed: ${sp.speed || '30 ft.'}<br>${sp.summary || ''}`;
+  wrap.appendChild(top);
+
+  const featureLinks = [];
+  if (sp.levels) {
+    Object.keys(sp.levels).sort((a,b)=>Number(a)-Number(b)).forEach(lvl => {
+      (sp.levels[lvl] || []).forEach(f => {
+        featureLinks.push({lvl, id:f.id, name:f.name, type:f.type});
+      });
+    });
+  }
+  if (featureLinks.length) {
+    const line = document.createElement('div');
+    line.className = 'speciesFeatureQuickLinks';
+    line.appendChild(document.createTextNode('Species Features: '));
+    featureLinks.forEach((f, idx) => {
+      if (idx) line.appendChild(document.createTextNode(', '));
+      line.appendChild(speciesFeatureLink(f.id, `${f.name} (Lv. ${f.lvl})`));
+    });
+    wrap.appendChild(line);
+  }
+  box.appendChild(wrap);
 }
 
 function allFeaturesForLevel(c, lvl){
@@ -586,6 +611,18 @@ function skillTooltipHtml(raw){
   return `<strong>${name}</strong><br><b>Ability:</b> ${meta.ability}<br><b>Common Uses:</b> ${meta.uses}<br><b>Check:</b> ${meta.mechanical}`;
 }
 
+
+function speciesFeatureTooltip(idOrName, label){
+  if (typeof window.speciesFeatureTooltipHtml === 'function') return window.speciesFeatureTooltipHtml(idOrName, label);
+  return `<strong>${label || idOrName}</strong><br><em>Species feature details pending validation.</em>`;
+}
+function speciesFeatureLink(idOrName, label){
+  return makeTooltipLink(label || displayName(idOrName), speciesFeatureTooltip(idOrName, label), 'rulesLink speciesFeatureLink');
+}
+function speciesFeatureLinkForFeature(feat){
+  return speciesFeatureLink(feat.id || feat.name, feat.name || feat.id);
+}
+
 function featByDisplayName(name){
   const clean = canonicalName(name).toLowerCase().replace(/[-’']/g,'').replace(/\s+/g,' ').trim();
   return (PLANNER_DATA.feats||[]).find(f => {
@@ -605,6 +642,7 @@ function featLinkNode(ft, fs={}){
 }
 function optionTooltipHtml(feat, opt){
   const fname=(feat.name||'').toLowerCase();
+  if (feat.scope === 'species' || (feat.id||'').includes('lineage') || (feat.id||'').includes('ancestry') || (feat.id||'').includes('legacy') || (feat.id||'').includes('revelation')) return speciesFeatureTooltip(opt, displayName(opt));
   if (feat.type === 'spellChoice' || fname.includes('spell') || fname.includes('cantrip')) return spellTooltipHtml(opt);
   if (fname.includes('skill') || fname.includes('expertise')) return skillTooltipHtml(opt);
   return '';
@@ -833,7 +871,17 @@ function selectedSubclassFeaturesForLevel(classObj, lvl){
 
 function renderFeature(lvl, feat){
   const div = document.createElement('div'); div.className = 'feature';
-  div.innerHTML = `<div class="featureHead"><strong>${feat.name}</strong> <small>${feat.scope==='species'?'species':feat.type}</small></div>`;
+  const head = document.createElement('div');
+  head.className = 'featureHead';
+  const title = document.createElement('strong');
+  if (feat.scope === 'species') title.appendChild(speciesFeatureLinkForFeature(feat));
+  else title.textContent = feat.name;
+  const sm = document.createElement('small');
+  sm.textContent = feat.scope==='species' ? 'species' : feat.type;
+  head.appendChild(title);
+  head.appendChild(document.createTextNode(' '));
+  head.appendChild(sm);
+  div.appendChild(head);
   const desc = featureDesc(feat);
   if (desc) { const p=document.createElement('p'); p.className='featureDesc'; p.textContent=desc; div.appendChild(p); }
 
@@ -1209,7 +1257,7 @@ init();
     for(let lvl=2; lvl<=20; lvl++) ensureFeature(classId,lvl,makeSpellList(`${classId}_prepared_spell_reference_${lvl}`,'Prepared Spell Reference'));
   });
 
-  PLANNER_DATA.version = 'beta-0.1.103-en-us';
+  PLANNER_DATA.version = 'beta-0.1.119-en-us';
   PLANNER_DATA.note = 'beta 0.1.103 EN-US: rules data audit pass 1, Warlock spell progression fix, dynamic class spell lists, spell availability panels, Thirsting Blade gate preserved, feat/skill tooltip fallbacks improved.';
 })();
 
@@ -1277,7 +1325,7 @@ try { render(); } catch(e) { console.warn('beta 0.1.103 refresh skipped', e); }
 (function applyBeta_0_1_103(){
   // Version marker
   if (typeof PLANNER_DATA !== 'undefined') {
-    PLANNER_DATA.version = 'beta-0.1.103-en-us';
+    PLANNER_DATA.version = 'beta-0.1.119-en-us';
     PLANNER_DATA.note = 'beta 0.1.103 EN-US: Origin Feat level 1 choice menus, Hex damage dice tooltip fix, persistent/manual level collapse behavior.';
   }
 
@@ -1457,7 +1505,7 @@ try { render(); } catch(e) { console.warn('beta 0.1.103 refresh skipped', e); }
 // beta 0.1.109 EN-US — separated spell DB + invocation tooltip pass.
 (function applyBeta_0_1_105(){
   if (typeof PLANNER_DATA !== 'undefined') {
-    PLANNER_DATA.version = 'beta-0.1.105-en-us';
+    PLANNER_DATA.version = 'beta-0.1.119-en-us';
     PLANNER_DATA.note = 'beta 0.1.109 EN-US: consolidated spells_DB structure; spell stat blocks, class tags, planner dropdowns, and Spell Reference use one canonical offline file.';
   }
 
@@ -1764,7 +1812,7 @@ try { render(); } catch(e) { console.warn('beta 0.1.103 refresh skipped', e); }
   };
 
   if (typeof PLANNER_DATA !== 'undefined') {
-    PLANNER_DATA.version = 'beta-0.1.108-en-us';
+    PLANNER_DATA.version = 'beta-0.1.119-en-us';
     PLANNER_DATA.note = 'beta 0.1.109 EN-US: spells_DB.js is the only spell data source; both planner spell menus and Spell Reference tab read from the same offline registry.';
   }
 
