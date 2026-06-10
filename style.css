@@ -95,3 +95,553 @@ footer { text-align:center; padding: 20px; color:#604d42; }
   .levelSummary { flex-wrap: wrap; }
   .levelTitle { white-space: normal; }
 }
+
+
+/* beta 0.1.106 — top tabs and spell reference quick consult */
+.topTabs {
+  max-width: 1200px;
+  margin: 0 auto 14px auto;
+  display: flex;
+  gap: 8px;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+.topTabButton {
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,.06);
+  color: inherit;
+  cursor: pointer;
+  font-weight: 700;
+}
+.topTabButton.active {
+  background: rgba(255,255,255,.16);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.06) inset;
+}
+.plannerTabPane[hidden] { display: none !important; }
+.spellReferenceIntro { margin: 0 0 14px 0; opacity: .85; }
+.spellClassBlock { margin: 10px 0; }
+.spellClassBlock > summary { cursor: pointer; font-weight: 800; padding: 10px; border-radius: 10px; background: rgba(255,255,255,.06); }
+.spellLevelBlock { margin: 8px 0 8px 14px; }
+.spellLevelBlock > summary { cursor: pointer; font-weight: 700; opacity: .95; }
+.spellReferenceList { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 8px 0 12px 0; padding: 0; list-style: none; }
+.spellReferenceList li { margin: 0; padding: 0; }
+.spellReferenceCount { opacity: .72; font-size: .9em; font-weight: 500; }
+
+
+/* beta 0.1.115 — hard fix for right-side clipping */
+html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+main { width: min(1000px, calc(100vw - 16px)); max-width: calc(100vw - 16px); margin-left: auto; margin-right: auto; overflow-x: hidden; }
+.card, .attributesBox, .originDetails, .feature, .choice, .levelDropdown, .subclassProgressionPanel { width: 100%; max-width: 100%; min-width: 0; }
+.attributesGrid { display: flex !important; flex-wrap: wrap !important; gap: 10px; width: 100%; max-width: 100%; min-width: 0; overflow: hidden; }
+.attrCard { flex: 1 1 155px; min-width: 140px; max-width: 100%; }
+.choiceRow, .featureHead, .levelSummary, .nameSaveRow, .headerActions { max-width: 100%; min-width: 0; }
+.levelUnlocks { min-width: 0; }
+select { max-width: 100%; }
+@media (max-width: 760px) { .attrCard { flex-basis: calc(50% - 10px); } }
+@media (max-width: 420px) { .attrCard { flex-basis: 100%; } }
+
+
+/* beta 0.1.115 — ability score responsive fit fix
+   Keep the original horizontal ability-score layout, but allow the cards to
+   shrink to the available planner width instead of clipping off-screen. */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+main, .container, .app, .sheet, .card {
+  max-width: 100%;
+}
+
+.attributesBox {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.attributesGrid {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.attrCard {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+.attrCard input {
+  width: min(64px, 80%) !important;
+  max-width: 64px !important;
+  min-width: 42px !important;
+}
+
+.attrCard h3,
+.attrCard .attrName,
+.attrCard label {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* On very narrow screens only, allow wrapping as a last resort. Desktop keeps one row. */
+@media (max-width: 760px) {
+  .attributesGrid {
+    flex-wrap: wrap !important;
+  }
+  .attrCard {
+    flex: 1 1 calc(33.333% - 10px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .attrCard {
+    flex: 1 1 calc(50% - 10px) !important;
+  }
+}
+
+/* Prevent long level summaries/dropdowns from expanding the page width. */
+.levelSummary,
+.levelUnlocks,
+.choiceRow,
+.featureHead,
+.selectedFeatureDetails,
+.subclassProgressionPanel,
+.featureCard,
+.featureBody {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere;
+}
+
+select {
+  max-width: 100%;
+}
+
+
+/* beta 0.1.115 — no-clipping ability layout fix
+   The previous patch used overflow hidden, which concealed the right side.
+   This patch keeps the original one-row ability layout but makes every card
+   truly shrink inside the sheet. */
+html, body {
+  max-width: 100%;
+  overflow-x: auto !important;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+main {
+  width: min(100%, 1120px) !important;
+  max-width: calc(100vw - 16px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  overflow: visible !important;
+}
+
+.card,
+.panel,
+.section,
+.attributesBox {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+.attributesGrid {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+.attrCard {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: auto !important;
+  flex: initial !important;
+  padding: 8px 4px !important;
+  overflow: visible !important;
+}
+
+.attrCard,
+.attrCard * {
+  min-width: 0 !important;
+}
+
+.attrCard h3,
+.attrCard .attrName,
+.attrCard label,
+.attrCard strong,
+.attrCard div,
+.attrCard span,
+.attrCard small {
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  line-height: 1.15 !important;
+}
+
+.attrCard input {
+  width: clamp(40px, 45%, 58px) !important;
+  min-width: 36px !important;
+  max-width: 58px !important;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+}
+
+/* On narrow windows, wrap only as fallback. */
+@media (max-width: 900px) {
+  .attributesGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 520px) {
+  .attributesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Prevent long text rows from expanding the sheet. */
+.levelHeader,
+.levelSummary,
+.levelUnlocks,
+.featureCard,
+.featureHead,
+.featureBody,
+.choiceBox,
+.choiceRow,
+.subclassProgressionPanel,
+.selectedFeatureDetails,
+.tooltipHost,
+.spellReference,
+.spellClassBlock {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+}
+
+select,
+input,
+button {
+  max-width: 100% !important;
+}
+
+
+/* beta 0.1.115 — root layout centering reset
+   Fixes whole-sheet right offset by removing pixel-style horizontal offsets
+   and centering the planner from the page root. */
+html,
+body {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  overflow-x: auto !important;
+  box-sizing: border-box !important;
+}
+
+body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  background-position: center top !important;
+}
+
+body > * {
+  max-width: 100% !important;
+}
+
+/* Center every likely top-level planner wrapper without using fixed pixels. */
+main,
+#app,
+#planner,
+#plannerRoot,
+#plannerContainer,
+.app,
+.planner,
+.wrapper,
+.container,
+.page,
+.sheet,
+.tabs,
+.tabbar,
+.tabBar,
+.topTabs {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Main visible sheet width: centered and responsive. */
+main,
+#app,
+#planner,
+#plannerRoot,
+#plannerContainer,
+.app,
+.planner,
+.wrapper,
+.container,
+.page,
+.sheet {
+  width: min(1180px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+}
+
+/* If the tabs are outside main, center them too. */
+.tabs,
+.tabbar,
+.tabBar,
+.topTabs {
+  width: min(1180px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Cards/sections should never force the root wider. */
+.card,
+.section,
+.panel,
+.featureCard,
+.attributesBox,
+.spellReference,
+.spellClassBlock {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Keep original single-row ability layout, but fit it inside the centered sheet. */
+.attributesGrid {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+}
+
+.attrCard {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.attrCard input {
+  width: clamp(38px, 45%, 62px) !important;
+  max-width: 62px !important;
+}
+
+@media (max-width: 780px) {
+  .attributesGrid {
+    flex-wrap: wrap !important;
+  }
+  .attrCard {
+    flex: 1 1 calc(33.333% - 6px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .attrCard {
+    flex: 1 1 calc(50% - 6px) !important;
+  }
+}
+
+/* Prevent long text or dropdowns from expanding the layout. */
+.levelHeader,
+.levelSummary,
+.levelUnlocks,
+.featureHead,
+.featureBody,
+.choiceBox,
+.choiceRow,
+.subclassProgressionPanel,
+.selectedFeatureDetails {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+}
+
+select,
+input,
+button {
+  max-width: 100% !important;
+}
+
+
+/* beta 0.1.115 — document-width expansion fix
+   Long feature summary headers were expanding the document width, making the
+   whole planner appear shifted right. These rules force all long inline
+   summaries to wrap inside the visible card instead of enlarging the page. */
+
+html {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+body {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  display: block !important;
+}
+
+header,
+main,
+footer {
+  display: block !important;
+  width: min(1180px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+  position: static !important;
+  transform: none !important;
+  left: auto !important;
+  right: auto !important;
+}
+
+header {
+  margin-top: 0 !important;
+}
+
+main {
+  overflow: visible !important;
+}
+
+.card,
+.levelBlock,
+.feature,
+.choice,
+.originDetails,
+.attributesBox {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Level summary/header must never behave like a single unbreakable line. */
+.levelHeader,
+.levelHeader *,
+.levelSummary,
+.levelSummary *,
+.levelUnlocks,
+.levelUnlocks *,
+summary,
+summary *,
+details,
+details * {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+
+/* If the level title row is flex, allow wrapping instead of widening page. */
+.levelHeader,
+.levelSummary {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: baseline !important;
+  gap: 6px !important;
+}
+
+/* Forms should fit their parent. */
+.nameSaveRow,
+.headerActions,
+.choiceRow,
+.attributesHeader {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex-wrap: wrap !important;
+}
+
+input,
+select,
+button,
+textarea {
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Keep ability scores in one row when room exists, but never widen page. */
+.attributesGrid {
+  display: grid !important;
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.attrCard {
+  min-width: 0 !important;
+  width: auto !important;
+  max-width: 100% !important;
+  padding: 8px 6px !important;
+  overflow-wrap: anywhere !important;
+}
+
+.attrCard input {
+  width: 58px !important;
+  max-width: 80% !important;
+}
+
+@media (max-width: 900px) {
+  .attributesGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .attributesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+

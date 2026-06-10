@@ -1453,3 +1453,320 @@ try { render(); } catch(e) { console.warn('beta 0.1.103 refresh skipped', e); }
 
   try { render(); } catch(e) { console.warn('beta 0.1.103 render refresh skipped', e); }
 })();
+
+// beta 0.1.109 EN-US — separated spell DB + invocation tooltip pass.
+(function applyBeta_0_1_105(){
+  if (typeof PLANNER_DATA !== 'undefined') {
+    PLANNER_DATA.version = 'beta-0.1.105-en-us';
+    PLANNER_DATA.note = 'beta 0.1.109 EN-US: consolidated spells_DB structure; spell stat blocks, class tags, planner dropdowns, and Spell Reference use one canonical offline file.';
+  }
+
+  // Merge the separated spell DB into the legacy tooltip meta so older code paths still work.
+  if (typeof SPELL_META !== 'undefined' && window.SPELLS_DB) {
+    Object.entries(window.SPELLS_DB).forEach(([name, meta]) => {
+      SPELL_META[name] = Object.assign({}, SPELL_META[name] || {}, meta);
+    });
+  }
+
+  // Invocation DB: condensed mechanical tooltips for selected Eldritch Invocations.
+  window.INVOCATION_DB = Object.assign({}, window.INVOCATION_DB || {}, {
+    'Agonizing Blast': {source:'PHB 2024', prereq:'Warlock cantrip: Eldritch Blast', text:'Add your Charisma modifier to the damage you deal with Eldritch Blast.'},
+    'Armor of Shadows': {source:'PHB 2024', prereq:'None', text:'You can cast Mage Armor on yourself without expending a spell slot.'},
+    'Devil’s Sight': {source:'PHB 2024', prereq:'None', text:'You can see normally in darkness, both magical and nonmagical, within the invocation range.'},
+    'Eldritch Mind': {source:'PHB 2024', prereq:'None', text:'You have Advantage on Constitution saving throws that you make to maintain Concentration.'},
+    'Eldritch Spear': {source:'PHB 2024', prereq:'Warlock cantrip: Eldritch Blast', text:'The range of Eldritch Blast increases.'},
+    'Fiendish Vigor': {source:'PHB 2024', prereq:'None', text:'You can cast False Life on yourself without expending a spell slot.'},
+    'Lessons of the First Ones': {source:'PHB 2024', prereq:'None', text:'Gain one Origin Feat of your choice that you qualify for.'},
+    'Mask of Many Faces': {source:'PHB 2024', prereq:'None', text:'You can cast Disguise Self without expending a spell slot.'},
+    'Misty Visions': {source:'PHB 2024', prereq:'None', text:'You can cast Silent Image without expending a spell slot.'},
+    'Pact of the Blade': {source:'PHB 2024', prereq:'Warlock Level 1+', text:'Gain a pact weapon option. Supports weapon-focused Warlock mechanics.'},
+    'Pact of the Chain': {source:'PHB 2024', prereq:'Warlock Level 1+', text:'Gain Find Familiar through your pact and access to special familiar options as defined by the invocation.'},
+    'Pact of the Tome': {source:'PHB 2024', prereq:'Warlock Level 1+', text:'Gain a Book of Shadows and extra cantrip access as defined by the invocation.'},
+    'Repelling Blast': {source:'PHB 2024', prereq:'Warlock cantrip: Eldritch Blast', text:'When you hit a creature with Eldritch Blast, you can push it away.'},
+    'Thirsting Blade': {source:'PHB 2024', prereq:'Warlock Level 5; Pact of the Blade', text:'You can attack more than once when taking the Attack action with your pact weapon. Must not appear before Warlock Level 5.'}
+  });
+
+  function cleanInvocationName(raw){
+    return canonicalName(String(raw || '').split('—')[0].trim());
+  }
+  window.invocationTooltipHtml = function(raw){
+    const name = cleanInvocationName(raw);
+    const meta = window.INVOCATION_DB[name];
+    if (!meta) return `<strong>${name}</strong><br><em>Invocation mechanics pending validation.</em>`;
+    const rows = [`<strong>${name}</strong>`];
+    if (meta.source) rows.push(`<b>Source:</b> ${meta.source}`);
+    if (meta.prereq) rows.push(`<b>Prerequisite:</b> ${meta.prereq}`);
+    rows.push(`<b>Mechanics:</b> ${meta.text}`);
+    return rows.join('<br>');
+  };
+
+  // Override spellMeta to use separated DB first and avoid Pending Validation when DB exists.
+  spellMeta = function(raw){
+    const name = canonicalName(raw);
+    const indexed = spellIndex()[name] || {};
+    const db = (window.SPELLS_DB && window.SPELLS_DB[name]) || {};
+    const meta = (typeof SPELL_META !== 'undefined' && SPELL_META[name]) || {};
+    if (!Object.keys(db).length && !Object.keys(meta).length && !indexed.level) return null;
+    return Object.assign({
+      level: indexed.level || 'Pending validation',
+      school: 'Pending validation',
+      casting: 'Pending validation',
+      range: 'Pending validation',
+      components: 'Pending validation',
+      duration: 'Pending validation',
+      text: 'Mechanical stat block pending detailed validation.'
+    }, indexed, meta, db);
+  };
+
+  spellTooltipHtml = function(raw){
+    const name = canonicalName(raw);
+    const meta = spellMeta(raw);
+    if (!meta) return `<strong>${name}</strong><br><em>Spell stat block pending validation.</em>`;
+    const rows = [
+      ['Source', meta.source], ['Level', meta.level], ['School', meta.school], ['Casting Time', meta.casting],
+      ['Range', meta.range], ['Components', meta.components], ['Duration', meta.duration], ['Save', meta.save],
+      ['Attack', meta.attack], ['Damage / Type', meta.damage], ['Healing', meta.healing], ['Scaling', meta.scaling]
+    ].filter(([,v]) => v && !String(v).match(/^Pending validation$/i));
+    let html = `<strong>${name}</strong>` + rows.map(([k,v]) => `<br><b>${k}:</b> ${v}`).join('');
+    if (Array.isArray(meta.cantripProgression) && meta.cantripProgression.length) {
+      html += `<br><b>Cantrip Progression:</b>` + meta.cantripProgression.map(x => `<br>• ${x}`).join('');
+    }
+    if (meta.text) html += `<br><b>Effect:</b> ${meta.text}`;
+    return html;
+  };
+
+  // Override option tooltips so invocations receive mouseover links like spells/feats.
+  optionTooltipHtml = function(feat, opt){
+    const fname=(feat.name||'').toLowerCase();
+    if (feat.type === 'spellChoice' || fname.includes('spell') || fname.includes('cantrip')) return spellTooltipHtml(opt);
+    if (fname.includes('skill') || fname.includes('expertise')) return skillTooltipHtml(opt);
+    if (fname.includes('invocation')) return window.invocationTooltipHtml(opt);
+    return '';
+  };
+  optionLabelNode = function(feat, opt){
+    const html = optionTooltipHtml(feat, opt);
+    return html ? makeTooltipLink(displayName(opt), html) : document.createTextNode(opt);
+  };
+
+  // Force Hellish Rebuke and Hex values after all earlier patches.
+  if (typeof SPELL_META !== 'undefined') {
+    SPELL_META['Hellish Rebuke'] = Object.assign({}, SPELL_META['Hellish Rebuke'] || {}, window.SPELLS_DB['Hellish Rebuke']);
+    SPELL_META['Hex'] = Object.assign({}, SPELL_META['Hex'] || {}, window.SPELLS_DB['Hex']);
+  }
+
+  // Version stamp for exported saves.
+  const oldSave = save;
+  save = function(){
+    state.charName = $('charName').value;
+    state.classId = $('classSelect').value;
+    state.backgroundId=$('backgroundSelect').value;
+    state.speciesId=$('speciesSelect')?.value||state.speciesId;
+    state.level = clampLevel($('levelInput').value);
+    state.plannerVersion = 'beta 0.1.109 EN-US';
+    localStorage.setItem('dndPlannerState', JSON.stringify(state));
+    alert('Saved in this browser.');
+  };
+  exportJSON = function(){
+    state.charName = $('charName').value;
+    state.classId = $('classSelect').value;
+    state.backgroundId=$('backgroundSelect').value;
+    state.speciesId=$('speciesSelect')?.value||state.speciesId;
+    state.level = clampLevel($('levelInput').value);
+    state.plannerVersion = 'beta 0.1.109 EN-US';
+    const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `character-${state.charName || 'dnd'}.json`;
+    a.click();
+  };
+
+  try { render(); } catch(e) { console.warn('beta 0.1.105 render refresh skipped', e); }
+})();
+
+
+// beta 0.1.107 — Spell Reference tab / offline class spell index refresh.
+// Uses the same SPELLS_DB and class spell option engine as the planner so validation is shared.
+(function applySpellReferenceTab_0_1_106(){
+  function ready(fn){
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+
+  function spellSort(a,b){
+    return String(canonicalName(a)).localeCompare(String(canonicalName(b)));
+  }
+
+  function spellLevelSortValue(label){
+    const s=String(label||'').toLowerCase();
+    if (s.includes('cantrip')) return 0;
+    const m=s.match(/(\d+)/);
+    return m ? Number(m[1]) : 99;
+  }
+
+  function spellLevelGroup(raw){
+    const meta = spellMeta(raw) || (window.SPELLS_DB && window.SPELLS_DB[canonicalName(raw)]) || {};
+    const lvl = meta.level || 'Pending validation';
+    if (String(lvl).toLowerCase().includes('cantrip')) return 'Cantrips';
+    return `${lvl} Level Spells`;
+  }
+
+  function allKnownClassIds(){
+    const ids = new Set();
+    (PLANNER_DATA.classes||[]).forEach(c=>ids.add(c.id));
+    Object.keys(SPELLS||{}).forEach(k=>{
+      const m=k.match(/^(.+?)_(cantrips|\d)$/);
+      if (m) ids.add(m[1]);
+    });
+    return Array.from(ids);
+  }
+
+  function classDisplayName(classId){
+    return (PLANNER_DATA.classes||[]).find(c=>c.id===classId)?.name || classId.replace(/\b\w/g, ch=>ch.toUpperCase());
+  }
+
+  function classSpellListForReference(classId){
+    let items=[];
+    if (window.__classSpellOptions) {
+      items = window.__classSpellOptions(classId, 20, true) || [];
+    }
+    if (!items.length) {
+      const add=(arr)=>{(arr||[]).forEach(x=>{if(!items.some(y=>canonicalName(y)===canonicalName(x))) items.push(x);});};
+      add(SPELLS[`${classId}_cantrips`]);
+      for(let i=1;i<=9;i++) add(SPELLS[`${classId}_${i}`]);
+    }
+    return items.sort(spellSort);
+  }
+
+  function buildSpellReferenceTab(){
+    const main=document.querySelector('main');
+    if (!main || document.getElementById('spellReferenceTab')) return;
+
+    const tabs=document.createElement('nav');
+    tabs.className='topTabs';
+    tabs.setAttribute('aria-label','Planner tabs');
+    const btnPlanner=document.createElement('button');
+    btnPlanner.type='button'; btnPlanner.className='topTabButton active'; btnPlanner.textContent='Character Planner';
+    const btnSpells=document.createElement('button');
+    btnSpells.type='button'; btnSpells.className='topTabButton'; btnSpells.textContent='Spell Reference';
+    tabs.append(btnPlanner, btnSpells);
+    main.parentNode.insertBefore(tabs, main);
+
+    const plannerPane=document.createElement('div');
+    plannerPane.id='plannerTab';
+    plannerPane.className='plannerTabPane';
+    Array.from(main.children).forEach(child=>plannerPane.appendChild(child));
+    main.appendChild(plannerPane);
+
+    const spellPane=document.createElement('div');
+    spellPane.id='spellReferenceTab';
+    spellPane.className='plannerTabPane';
+    spellPane.hidden=true;
+    const card=document.createElement('section');
+    card.className='card';
+    card.innerHTML = `<h2>Spell Reference</h2><p class="spellReferenceIntro">Quick table consult and validation view. This tab uses the same offline spell database and class spell index used by the planner tooltips.</p>`;
+    const container=document.createElement('div');
+    container.id='spellReferenceContent';
+    card.appendChild(container);
+    spellPane.appendChild(card);
+    main.appendChild(spellPane);
+
+    function show(which){
+      const spells = which === 'spells';
+      spellPane.hidden = !spells;
+      plannerPane.hidden = spells;
+      btnSpells.classList.toggle('active', spells);
+      btnPlanner.classList.toggle('active', !spells);
+      if (spells) renderSpellReferenceContent();
+    }
+    btnPlanner.addEventListener('click', ()=>show('planner'));
+    btnSpells.addEventListener('click', ()=>show('spells'));
+  }
+
+  function renderSpellReferenceContent(){
+    const box=document.getElementById('spellReferenceContent');
+    if (!box) return;
+    box.innerHTML='';
+    allKnownClassIds().sort((a,b)=>classDisplayName(a).localeCompare(classDisplayName(b))).forEach(classId=>{
+      const spells=classSpellListForReference(classId);
+      if (!spells.length) return;
+      const byLevel=new Map();
+      spells.forEach(sp=>{
+        const group=spellLevelGroup(sp);
+        if(!byLevel.has(group)) byLevel.set(group, []);
+        byLevel.get(group).push(sp);
+      });
+      const classDetails=document.createElement('details');
+      classDetails.className='spellClassBlock';
+      const sum=document.createElement('summary');
+      sum.innerHTML = `${classDisplayName(classId)} <span class="spellReferenceCount">${spells.length} spells/cantrips</span>`;
+      classDetails.appendChild(sum);
+      Array.from(byLevel.keys()).sort((a,b)=>spellLevelSortValue(a)-spellLevelSortValue(b)).forEach(group=>{
+        const levelDetails=document.createElement('details');
+        levelDetails.className='spellLevelBlock';
+        levelDetails.open = group === 'Cantrips';
+        const levelSummary=document.createElement('summary');
+        const groupItems=byLevel.get(group).sort(spellSort);
+        levelSummary.innerHTML = `${group} <span class="spellReferenceCount">${groupItems.length}</span>`;
+        levelDetails.appendChild(levelSummary);
+        const ul=document.createElement('ul');
+        ul.className='spellReferenceList';
+        groupItems.forEach(sp=>{
+          const li=document.createElement('li');
+          li.appendChild(makeTooltipLink(canonicalName(sp), spellTooltipHtml(sp), 'rulesLink spellRulesLink'));
+          ul.appendChild(li);
+        });
+        levelDetails.appendChild(ul);
+        classDetails.appendChild(levelDetails);
+      });
+      box.appendChild(classDetails);
+    });
+  }
+
+  ready(function(){
+    buildSpellReferenceTab();
+    window.renderSpellReferenceContent = renderSpellReferenceContent;
+  });
+})();
+
+// beta 0.1.109 EN-US — make planner spell selectors and Spell Reference read from SPELLS_DB metadata.
+(function applyConsolidatedSpellRegistry_0_1_108(){
+  if (!window.SPELL_REGISTRY) return;
+
+  const oldClassSpellOptions = window.__classSpellOptions;
+  window.__classSpellOptions = function(classId, characterLevel, includeCantrips=false){
+    const fromDb = window.SPELL_REGISTRY.getClassSpells(classId, characterLevel, includeCantrips);
+    if (fromDb && fromDb.length) return fromDb;
+    return oldClassSpellOptions ? oldClassSpellOptions(classId, characterLevel, includeCantrips) : [];
+  };
+
+  const oldSpellMeta = spellMeta;
+  spellMeta = function(raw){
+    const name = canonicalName(raw);
+    const db = window.SPELL_REGISTRY.getSpell(name) || (window.SPELLS_DB && window.SPELLS_DB[name]);
+    const old = oldSpellMeta ? oldSpellMeta(raw) : null;
+    if (!db && old) return old;
+    if (!db) return null;
+    const clsText = db.classes ? Object.entries(db.classes).map(([cls,lvls])=>`${cls} ${lvls.map(l=>l===0?'Cantrip':l).join('/')}`).join('; ') : '';
+    return Object.assign({}, old || {}, db, {
+      classTags: clsText,
+      source: db.sources && db.sources.length ? db.sources.join(', ') : (db.source || old?.source || 'PHB 2024 / Supplements')
+    });
+  };
+
+  const oldSpellTooltipHtml = spellTooltipHtml;
+  spellTooltipHtml = function(raw){
+    const html = oldSpellTooltipHtml ? oldSpellTooltipHtml(raw) : '';
+    const meta = spellMeta(raw);
+    if (!meta) return html;
+    const tags = meta.classTags ? `<br><b>Lists:</b> ${meta.classTags}` : '';
+    if (html && tags && !html.includes('<b>Lists:</b>')) return html + tags;
+    return html;
+  };
+
+  if (typeof PLANNER_DATA !== 'undefined') {
+    PLANNER_DATA.version = 'beta-0.1.108-en-us';
+    PLANNER_DATA.note = 'beta 0.1.109 EN-US: spells_DB.js is the only spell data source; both planner spell menus and Spell Reference tab read from the same offline registry.';
+  }
+
+  try { render(); } catch(e) { console.warn('beta 0.1.108 render refresh skipped', e); }
+})();
