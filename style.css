@@ -2,10 +2,12 @@
 body { margin: 0; }
 header { background: #4b1f16; color: #fff; padding: 18px 24px; }
 h1 { margin: 0 0 6px; }
-main { max-width: 1100px; margin: 20px auto; padding: 0 14px; display: grid; gap: 16px; }
-.card { background: #fffaf0; border: 1px solid #d1c2a3; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px #0001; }
+html, body { width: 100%; max-width: 100%; overflow-x: hidden; box-sizing: border-box; }
+*, *::before, *::after { box-sizing: inherit; }
+main { width: min(1100px, calc(100vw - 28px)); max-width: 1100px; margin: 20px auto; padding: 0; display: grid; gap: 16px; overflow-x: hidden; }
+.card { background: #fffaf0; border: 1px solid #d1c2a3; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px #0001; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 label { display: block; margin: 10px 0; font-weight: bold; }
-input, select, button { font-size: 16px; padding: 8px; margin-top: 4px; max-width: 100%; }
+input, select, button { font-size: 16px; padding: 8px; margin-top: 4px; max-width: 100%; min-width: 0; }
 button { cursor: pointer; border: 0; border-radius: 8px; background: #74301f; color: white; margin-right: 8px; }
 button:hover { filter: brightness(1.1); }
 .importLabel input { display:block; }
@@ -19,9 +21,9 @@ button:hover { filter: brightness(1.1); }
 .levelBlock { border-top: 1px solid #d9ccb3; padding-top: 14px; margin-top: 14px; }
 .feature { padding: 12px; margin: 10px 0; border: 1px solid #e1d5bd; border-radius: 10px; background: #fff; }
 .featureHead { display:flex; gap: 10px; align-items: center; }
-.choice { margin-left: 30px; margin-top: 10px; padding: 10px; background:#f7f1e5; border-radius:8px; }
-.choiceRow { display:flex; gap:8px; align-items:center; margin: 6px 0; flex-wrap: wrap; }
-.choiceRow select { min-width: 240px; }
+.choice { margin-left: 0; margin-top: 10px; padding: 10px; background:#f7f1e5; border-radius:8px; max-width: 100%; overflow-x: hidden; }
+.choiceRow { display:flex; gap:8px; align-items:center; margin: 6px 0; flex-wrap: wrap; min-width:0; max-width:100%; }
+.choiceRow select { min-width: min(240px, 100%); max-width: 100%; }
 small { color:#6b5949; }
 pre { white-space: pre-wrap; background:#2b211d; color:#f8ecd5; padding:12px; border-radius:8px; }
 footer { text-align:center; padding: 20px; color:#604d42; }
@@ -31,14 +33,13 @@ footer { text-align:center; padding: 20px; color:#604d42; }
 .attributesHeader h3 { margin: 0; }
 .pointsStatus { background:#f7f1e5; border-radius:8px; padding:8px 10px; }
 .pointsStatus.over { background:#ffd7d0; color:#7a1200; }
-.attributesGrid { display:grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap:10px; margin: 12px 0; }
+.attributesGrid { display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin: 12px 0; min-width:0; max-width:100%; }
 .attrCard { border:1px solid #e1d5bd; border-radius:10px; padding:10px; background:#fffaf0; text-align:center; }
 .attrCard label { margin:0; }
 .attrName { display:block; font-weight:bold; margin-bottom:6px; }
 .attrCard input { width:64px; text-align:center; }
 .attrMod { display:block; margin-top:6px; font-size:14px; color:#6b5949; }
 .attrCost { display:block; margin-top:2px; font-size:13px; color:#6b5949; }
-@media (max-width: 860px) { .attributesGrid { grid-template-columns: repeat(3, minmax(110px, 1fr)); } }
 @media (max-width: 480px) { .attributesGrid { grid-template-columns: repeat(2, minmax(110px, 1fr)); } }
 .originDetails{margin:12px 0;padding:12px;border:1px solid #d8c9aa;border-radius:10px;background:#fffaf0}
 .originControls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
@@ -75,10 +76,22 @@ footer { text-align:center; padding: 20px; color:#604d42; }
 .feature[scope="subclass"]{background:#fffaf0;}
 
 .rulesLink { position: relative; color: #6b2417; text-decoration: underline dotted; cursor: help; font-weight: 600; }
-.rulesTooltip { display: none; position: fixed; z-index: 9999; left: calc(100% + 12px); top: 0; width: min(380px, 80vw); max-height: 70vh; overflow: auto; background: #2b211d; color: #f8ecd5; border: 1px solid #d1c2a3; border-radius: 8px; padding: 10px; box-shadow: 0 6px 18px #0006; font-weight: normal; line-height: 1.35; white-space: normal; pointer-events: none; }
+.rulesTooltip { display: none; position: fixed; z-index: 9999; left: 0; top: 0; box-sizing: border-box; width: min(380px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: 70vh; overflow: auto; background: #2b211d; color: #f8ecd5; border: 1px solid #d1c2a3; border-radius: 8px; padding: 10px; box-shadow: 0 6px 18px #0006; font-weight: normal; line-height: 1.35; white-space: normal; pointer-events: none; }
 .rulesLink:hover .rulesTooltip, .rulesLink:focus .rulesTooltip { display: block; }
-.inlineSelectionDetails { flex-basis: 100%; margin: 2px 0 6px 92px; font-size: .92rem; }
+.inlineSelectionDetails { flex-basis: 100%; width: 100%; margin: 2px 0 6px 0; font-size: .92rem; min-width:0; }
 .selectedFeatureDetails { flex-basis: 100%; margin-top: 8px; padding: 10px; background: #fffaf0; border: 1px solid #e1d5bd; border-radius: 8px; }
 
 .featSelectedLink { margin-left: 0; }
 .featRulesLink { color:#5f1e15; }
+
+
+/* beta 0.1.104 layout overflow hardening */
+.nameSaveRow, .headerActions, .attributesHeader, .originControls, .featPicker, .featureHead, .levelSummary { min-width: 0; max-width: 100%; }
+.feature, .originDetails, .attributesBox, .subclassProgressionPanel, .selectedFeatureDetails, pre { max-width: 100%; overflow-x: auto; }
+.rulesLink { overflow-wrap: anywhere; }
+@media (max-width: 700px) {
+  main { width: calc(100vw - 16px); }
+  .card { padding: 12px; }
+  .levelSummary { flex-wrap: wrap; }
+  .levelTitle { white-space: normal; }
+}

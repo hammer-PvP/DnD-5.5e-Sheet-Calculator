@@ -354,7 +354,7 @@ const SPELL_META = {
   'Summon Fiend':{level:'6th',school:'Conjuration',casting:'Action',range:'90 ft.',components:'V, S, M',duration:'Concentration, up to 1 hour',text:'Summons a Fiendish spirit stat block. Its stats scale with the slot level and your spell attack modifier.'}
 };
 
-// beta 0.1.101 — broader spell tooltip coverage.
+// beta 0.1.103 — broader spell tooltip coverage.
 // These entries are intentionally compact mechanical stat blocks for planner use.
 Object.assign(SPELL_META, {
   'Acid Splash':{level:'Cantrip',school:'Evocation',casting:'Action',range:'60 ft.',components:'V, S',duration:'Instantaneous',save:'Dexterity',damage:'Acid',scaling:'Level 1: 1d6; Level 5: 2d6; Level 11: 3d6; Level 17: 4d6.',text:'Target creature(s) in range take Acid damage on a failed save.'},
@@ -558,7 +558,7 @@ function makeTooltipLink(label, tipHtml, className='rulesLink'){
   span.appendChild(tip);
   span.addEventListener('mousemove', (e)=>positionTooltip(tip,e));
   span.addEventListener('mouseenter', (e)=>positionTooltip(tip,e));
-  span.addEventListener('focus', ()=>{ tip.style.left='calc(100% + 12px)'; tip.style.top='0px'; });
+  span.addEventListener('focus', ()=>{ tip.style.position='fixed'; tip.style.left='24px'; tip.style.top='80px'; });
   return span;
 }
 function positionTooltip(tip, e){
@@ -1097,10 +1097,10 @@ function importJSON(e){ const f = e.target.files[0]; if(!f) return; const r = ne
 init();
 
 
-// beta 0.1.101 — Rules data audit pass 1.
+// beta 0.1.103 — Rules data audit pass 1.
 // Adds source-driven spell option filtering, Warlock level 2 spell update,
 // broader class spell availability panels, and stronger feat/skill tooltip fallbacks.
-(function applyRulesAudit_0_1_101(){
+(function applyRulesAudit_0_1_103(){
   const SPELLCASTER_CLASS_IDS = new Set(['bard','cleric','druid','sorcerer','ranger','wizard','paladin','warlock']);
   const SPELL_LEVEL_LABEL = {1:'1st',2:'2nd',3:'3rd',4:'4th',5:'5th',6:'6th',7:'7th',8:'8th',9:'9th'};
 
@@ -1209,8 +1209,8 @@ init();
     for(let lvl=2; lvl<=20; lvl++) ensureFeature(classId,lvl,makeSpellList(`${classId}_prepared_spell_reference_${lvl}`,'Prepared Spell Reference'));
   });
 
-  PLANNER_DATA.version = 'beta-0.1.101-en-us';
-  PLANNER_DATA.note = 'beta 0.1.101 EN-US: rules data audit pass 1, Warlock spell progression fix, dynamic class spell lists, spell availability panels, Thirsting Blade gate preserved, feat/skill tooltip fallbacks improved.';
+  PLANNER_DATA.version = 'beta-0.1.103-en-us';
+  PLANNER_DATA.note = 'beta 0.1.103 EN-US: rules data audit pass 1, Warlock spell progression fix, dynamic class spell lists, spell availability panels, Thirsting Blade gate preserved, feat/skill tooltip fallbacks improved.';
 })();
 
 // Override option filtering with the rules-audit version.
@@ -1270,4 +1270,186 @@ function spellMeta(raw){
 }
 
 // Refresh after data mutation.
-try { render(); } catch(e) { console.warn('beta 0.1.101 refresh skipped', e); }
+try { render(); } catch(e) { console.warn('beta 0.1.103 refresh skipped', e); }
+
+
+// beta 0.1.103 — pending fixes and Origin Feat generated choices.
+(function applyBeta_0_1_103(){
+  // Version marker
+  if (typeof PLANNER_DATA !== 'undefined') {
+    PLANNER_DATA.version = 'beta-0.1.103-en-us';
+    PLANNER_DATA.note = 'beta 0.1.103 EN-US: Origin Feat level 1 choice menus, Hex damage dice tooltip fix, persistent/manual level collapse behavior.';
+  }
+
+  // 1) Hex tooltip/stat block fix: explicitly show the extra damage dice.
+  if (typeof SPELL_META !== 'undefined' && SPELL_META['Hex']) {
+    SPELL_META['Hex'].damage = '+1d6 Necrotic damage on each hit you make against the target';
+    SPELL_META['Hex'].text = 'Bonus Action to mark a creature. Until the spell ends, you deal an extra 1d6 Necrotic damage to the target whenever you hit it with an attack. Also choose one ability; the target has Disadvantage on ability checks using that ability.';
+  }
+
+  // 2) Persistent manual level open/close state.
+  if (!state.openLevels) state.openLevels = {};
+  function levelOpenKey(classId, lvl){ return `${classId}|${lvl}`; }
+  function getLevelOpen(classId, lvl){
+    const k = levelOpenKey(classId, lvl);
+    // Default is open. The user must manually collapse it.
+    return state.openLevels[k] !== false;
+  }
+  function setLevelOpen(classId, lvl, open){
+    state.openLevels[levelOpenKey(classId, lvl)] = !!open;
+  }
+
+  // 3) Background/Origin Feat generated Level 1 choices.
+  function sourceSpellListForMagicInitiate(source, kind){
+    const key = source.toLowerCase();
+    if (kind === 'cantrips') return (SPELLS && SPELLS[`${key}_cantrips`]) || [];
+    if (kind === 'level1') return (SPELLS && SPELLS[`${key}_1`]) || [];
+    return [];
+  }
+  function originFeatFeaturesForLevel(lvl){
+    if (Number(lvl) !== 1) return [];
+    const bg = currentBackground && currentBackground();
+    if (!bg || !bg.feat) return [];
+    const featName = String(bg.feat);
+    const out = [];
+    const base = {scope:'originFeat'};
+
+    const mi = featName.match(/Magic Initiate \((Cleric|Druid|Wizard)\)/i);
+    if (mi) {
+      const listName = mi[1][0].toUpperCase() + mi[1].slice(1).toLowerCase();
+      out.push(Object.assign({}, base, {
+        id:`origin_magic_initiate_${listName.toLowerCase()}_cantrips`,
+        name:`Origin Feat — Magic Initiate (${listName}) Cantrips`,
+        type:'originSpellChoice',
+        count:2,
+        options:sourceSpellListForMagicInitiate(listName, 'cantrips'),
+        desc:`Choose two ${listName} cantrips granted by your Origin Feat.`
+      }));
+      out.push(Object.assign({}, base, {
+        id:`origin_magic_initiate_${listName.toLowerCase()}_spell`,
+        name:`Origin Feat — Magic Initiate (${listName}) Level 1 Spell`,
+        type:'originSpellChoice',
+        count:1,
+        options:sourceSpellListForMagicInitiate(listName, 'level1'),
+        desc:`Choose one level 1 ${listName} spell granted by your Origin Feat. It can be cast once per Long Rest without a spell slot.`
+      }));
+      out.push(Object.assign({}, base, {
+        id:`origin_magic_initiate_${listName.toLowerCase()}_ability`,
+        name:`Origin Feat — Magic Initiate (${listName}) Spellcasting Ability`,
+        type:'choice',
+        count:1,
+        options:['Intelligence','Wisdom','Charisma'],
+        desc:'Choose the spellcasting ability for the spells granted by this Origin Feat.'
+      }));
+    }
+
+    if (/Skilled/i.test(featName)) {
+      const skills = ['Acrobatics','Animal Handling','Arcana','Athletics','Deception','History','Insight','Intimidation','Investigation','Medicine','Nature','Perception','Performance','Persuasion','Religion','Sleight of Hand','Stealth','Survival'];
+      const tools = ['Alchemist’s Supplies','Brewer’s Supplies','Calligrapher’s Supplies','Carpenter’s Tools','Cartographer’s Tools','Cobbler’s Tools','Cook’s Utensils','Glassblower’s Tools','Jeweler’s Tools','Leatherworker’s Tools','Mason’s Tools','Painter’s Supplies','Potter’s Tools','Smith’s Tools','Tinker’s Tools','Weaver’s Tools','Woodcarver’s Tools','Disguise Kit','Forgery Kit','Herbalism Kit','Navigator’s Tools','Poisoner’s Kit','Thieves’ Tools'];
+      out.push(Object.assign({}, base, {
+        id:'origin_skilled_choices',
+        name:'Origin Feat — Skilled Proficiencies',
+        type:'choice',
+        count:3,
+        options:[...skills, ...tools],
+        desc:'Choose any combination of three skills or tools granted by the Skilled Origin Feat.'
+      }));
+    }
+
+    if (/Crafter/i.test(featName)) {
+      const artisan = ['Alchemist’s Supplies','Brewer’s Supplies','Calligrapher’s Supplies','Carpenter’s Tools','Cartographer’s Tools','Cobbler’s Tools','Cook’s Utensils','Glassblower’s Tools','Jeweler’s Tools','Leatherworker’s Tools','Mason’s Tools','Painter’s Supplies','Potter’s Tools','Smith’s Tools','Tinker’s Tools','Weaver’s Tools','Woodcarver’s Tools'];
+      out.push(Object.assign({}, base, {
+        id:'origin_crafter_tools',
+        name:'Origin Feat — Crafter Tool Proficiencies',
+        type:'choice',
+        count:3,
+        options:artisan,
+        desc:'Choose three Artisan’s Tools granted by the Crafter Origin Feat.'
+      }));
+    }
+
+    if (/Musician/i.test(featName)) {
+      const instruments = ['Bagpipes','Drum','Dulcimer','Flute','Horn','Lute','Lyre','Pan Flute','Shawm','Viol'];
+      out.push(Object.assign({}, base, {
+        id:'origin_musician_instruments',
+        name:'Origin Feat — Musician Instrument Proficiencies',
+        type:'choice',
+        count:3,
+        options:instruments,
+        desc:'Choose three Musical Instruments granted by the Musician Origin Feat.'
+      }));
+    }
+
+    return out;
+  }
+
+  // Override allFeaturesForLevel to inject Origin Feat generated choices at Level 1.
+  const previousAllFeaturesForLevel = allFeaturesForLevel;
+  allFeaturesForLevel = function(c, lvl){
+    const existing = previousAllFeaturesForLevel(c, lvl) || [];
+    if (Number(lvl) === 1) {
+      const extra = originFeatFeaturesForLevel(lvl);
+      const existingIds = new Set(existing.map(f=>f.id));
+      extra.forEach(f=>{ if(!existingIds.has(f.id)) existing.push(f); });
+    }
+    return existing;
+  };
+
+  // Override render to preserve/manualize level block collapse state.
+  render = function(){
+    state.classId = $('classSelect').value;
+    state.backgroundId = $('backgroundSelect').value;
+    state.speciesId = $('speciesSelect')?.value || state.speciesId;
+    state.level = clampLevel($('levelInput').value);
+    renderOrigin(); renderSpeciesDetails(); renderAttributes();
+    const c = currentClass(); const box = $('features'); box.innerHTML = '';
+    for (let lvl=1; lvl<=state.level; lvl++) {
+      const feats = allFeaturesForLevel(c, lvl); if (!feats.length) continue;
+      const block = document.createElement('details');
+      block.className = 'levelBlock levelDropdown';
+      block.open = getLevelOpen(c.id, lvl);
+      block.addEventListener('toggle', () => { setLevelOpen(c.id, lvl, block.open); });
+
+      const summary = document.createElement('summary');
+      summary.className = 'levelSummary';
+      const unlockNames = feats.map(f => f.name).join(' • ');
+      summary.innerHTML = `<span class="levelTitle">Level ${lvl}</span><span class="levelUnlocks">${unlockNames}</span>`;
+      block.appendChild(summary);
+
+      const content = document.createElement('div');
+      content.className = 'levelContent';
+      feats.forEach(feat => content.appendChild(renderFeature(lvl, feat)));
+      block.appendChild(content);
+      box.appendChild(block);
+    }
+    renderSummary();
+  };
+
+  // Override save/export to persist open states and version data cleanly.
+  const previousSave = save;
+  save = function(){
+    state.charName = $('charName').value;
+    state.classId = $('classSelect').value;
+    state.backgroundId=$('backgroundSelect').value;
+    state.speciesId=$('speciesSelect')?.value||state.speciesId;
+    state.level = clampLevel($('levelInput').value);
+    state.plannerVersion = 'beta 0.1.103 EN-US';
+    localStorage.setItem('dndPlannerState', JSON.stringify(state));
+    alert('Saved in this browser.');
+  };
+  exportJSON = function(){
+    state.charName = $('charName').value;
+    state.classId = $('classSelect').value;
+    state.backgroundId=$('backgroundSelect').value;
+    state.speciesId=$('speciesSelect')?.value||state.speciesId;
+    state.level = clampLevel($('levelInput').value);
+    state.plannerVersion = 'beta 0.1.103 EN-US';
+    const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `character-${state.charName || 'dnd'}.json`;
+    a.click();
+  };
+
+  try { render(); } catch(e) { console.warn('beta 0.1.103 render refresh skipped', e); }
+})();

@@ -58,7 +58,7 @@ const WARLOCK_INVOCATIONS = [
 ];
 
 const PLANNER_DATA = {
-  version: 'beta-0.1.101-en-us',
+  version: 'beta-0.1.103-en-us',
   note: 'v0.5: spell lists separated by class; Warlock Pact Magic and Eldritch Invocations revised.',
   classes: [
     { id:'barbarian', name:'Barbarian', source:'Player’s Handbook 2024', pageRef:'p. 51', levels:{
@@ -237,8 +237,8 @@ PLANNER_DATA.feats = [
 
 
 // v0.6 — PHB 2024/5.5e species and short feature descriptions.
-PLANNER_DATA.version = 'beta-0.1.101-en-us';
-PLANNER_DATA.note = 'beta 0.1.101 EN-US: broader spell hover coverage across class spell lists, cantrip progression dice, spell stat-block framework, Thirsting Blade level gate, and Battle Master maneuver selectors.';
+PLANNER_DATA.version = 'beta-0.1.103-en-us';
+PLANNER_DATA.note = 'beta 0.1.103 EN-US: broader spell hover coverage across class spell lists, cantrip progression dice, spell stat-block framework, Thirsting Blade level gate, and Battle Master maneuver selectors.';
 PLANNER_DATA.species = [
   {id:'aasimar', name:'Aasimar', size:'Small or Medium', speed:'30 ft.', summary:'Celestial resistances, healing, and a level 3 transformation.', levels:{
     1:[F('celestial_resistance','Celestial Resistance','species',{desc:'Resistance to Necrotic and Radiant damage.'}),F('darkvision','Darkvision','species',{desc:'You can see in darkness within the range specified by your species.'}),F('healing_hands','Healing Hands','species',{desc:'Heals a creature you touch; uses return on a Long Rest.'}),F('light_bearer','Light Bearer','species',{desc:'You know the Light cantrip.'})],
@@ -431,6 +431,6 @@ PLANNER_DATA.featureDescriptions = Object.assign({}, PLANNER_DATA.featureDescrip
    ['paladin',5,'paladin_2'],['paladin',9,'paladin_3'],['paladin',17,'paladin_5']
   ].forEach(([classId, lvl, key]) => addLevelFeature(classId, lvl, spellList(`supp_${key}`, `Supplement spells — ${key.split('_').pop()}º level`, SPELLS[key] || [])));
 
-  PLANNER_DATA.version = 'beta-0.1.101-en-us';
-  PLANNER_DATA.note = 'beta 0.1.101 EN-US: broader spell hover coverage across class spell lists, cantrip progression dice, spell stat-block framework, Thirsting Blade level gate, and Battle Master maneuver selectors.';
+  PLANNER_DATA.version = 'beta-0.1.103-en-us';
+  PLANNER_DATA.note = 'beta 0.1.103 EN-US: broader spell hover coverage across class spell lists, cantrip progression dice, spell stat-block framework, Thirsting Blade level gate, and Battle Master maneuver selectors.';
 })();
