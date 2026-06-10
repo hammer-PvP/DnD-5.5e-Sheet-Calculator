@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Character Planner D&D 5.5e Portable beta 0.1.101 EN-US</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header>
+  <h1>Character Planner D&D 5.5e <span style="font-size:0.55em;opacity:.75">beta 0.1.101 EN-US</span></h1>
+  <p>Lightweight portable local planner. Saves characters in this browser.</p>
+</header>
+<main>
+  <section class="card">
+    <h2>1. Character</h2>
+    <div class="nameSaveRow">
+      <label class="nameField">Character Name <input id="charName" placeholder="Example: Magnus Pax"></label>
+      <div class="headerActions">
+        <button id="saveBtn">Save</button>
+        <button id="exportBtn">Export JSON</button>
+        <label class="importLabel compactImport">Import JSON <input id="importInput" type="file" accept="application/json"></label>
+      </div>
+    </div>
+    <label>Class
+      <select id="classSelect"></select>
+    </label>
+    <label>Origin / Background
+      <select id="backgroundSelect"></select>
+    </label>
+    <div id="originDetails" class="originDetails"></div>
+    <label>Species
+      <select id="speciesSelect"></select>
+    </label>
+    <div id="speciesDetails" class="originDetails"></div>
+    <label>Level
+      <input id="levelInput" type="number" min="1" max="20" value="1">
+    </label>
+    <div class="attributesBox">
+      <div class="attributesHeader">
+        <h3>Ability Scores — Point Buy</h3>
+        <div class="pointsStatus">Points used: <b id="pointsUsed">0</b>/27 | Remaining: <b id="pointsLeft">27</b></div>
+      </div>
+      <div class="attributesGrid" id="attributesGrid"></div>
+      <small>Standard Point Buy: ability scores from 8 to 15 before origin bonuses. Cost: 8=0, 9=1, 10=2, 11=3, 12=4, 13=5, 14=7, 15=9.</small>
+    </div>
+
+  </section>
+
+  <section class="card">
+    <h2>2. Features by Level</h2>
+    <div id="features"></div>
+  </section>
+
+  <section class="card">
+    <h2>3. Summary</h2>
+    <pre id="summary"></pre>
+  </section>
+</main>
+<footer>
+  <p>Incremental validation database. Previous versions are preserved; new versions only expand or correct features.</p>
+</footer>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
