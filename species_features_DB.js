@@ -1,4 +1,4 @@
-// beta 0.1.119 EN-US — canonical species mechanical feature database.
+// beta 0.1.127 EN-US — canonical species mechanical feature database.
 // Offline/local only. This DB powers species feature tooltips in the planner.
 // It uses condensed mechanical summaries, not narrative/fantasy text.
 
@@ -35,9 +35,8 @@ window.SPECIES_FEATURES_DB = {
   "celestial_revelation": {
     name:"Celestial Revelation", source:"PHB 2024", species:"Aasimar", type:"Transformation",
     activation:"Bonus Action", level:"Character Level 3", duration:"1 minute", uses:"Once per Long Rest",
-    mechanics:"Choose a revelation option each time you transform. Once on each of your turns during the transformation, when you damage a target with an attack or spell, deal extra damage equal to your Proficiency Bonus.",
-    damage:"Necrotic for Necrotic Shroud; Radiant for Heavenly Wings and Inner Radiance.",
-    scaling:"Extra damage = Proficiency Bonus."
+    mechanics:"At character level 3, choose one revelation option when you activate this feature. The selected option determines the movement, aura, or fear effect. Once on each of your turns during the transformation, when you damage a target with an attack or spell, deal extra damage equal to your Proficiency Bonus.",
+    scaling:"Extra damage = Proficiency Bonus. The option-specific tooltip explains the selected form."
   },
   "celestial_wings": {
     name:"Heavenly Wings", source:"PHB 2024", species:"Aasimar", type:"Celestial Revelation Option",
@@ -287,3 +286,13 @@ window.speciesFeatureTooltipHtml = function speciesFeatureTooltipHtml(idOrName, 
   ].filter(([,v]) => v);
   return `<strong>${feature.name || label}</strong>` + rows.map(([k,v]) => `<br><b>${k}:</b> ${v}`).join('');
 };
+
+
+// beta 0.1.127 EN-US — Aasimar Celestial Revelation option aliases.
+Object.assign(window.SPECIES_FEATURES_DB, {
+  "celestial_wings": window.SPECIES_FEATURES_DB["heavenly_wings"],
+  "radiant_transformation": window.SPECIES_FEATURES_DB["inner_radiance"],
+  "celestial_revelation_heavenly_wings": window.SPECIES_FEATURES_DB["heavenly_wings"],
+  "celestial_revelation_inner_radiance": window.SPECIES_FEATURES_DB["inner_radiance"],
+  "celestial_revelation_necrotic_shroud": window.SPECIES_FEATURES_DB["necrotic_shroud"]
+});

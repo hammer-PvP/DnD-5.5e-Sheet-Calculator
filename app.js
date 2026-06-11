@@ -245,6 +245,32 @@ function displayName(raw){
 function canonicalName(raw){
   return displayName(raw).replace(/\s*\((PHB 2024|Tasha|Xanathar|XGE|TCE)\)\s*$/i,'').trim();
 }
+
+function canonicalOptionKey(raw){
+  return canonicalName(raw)
+    .replace(/[’‘]/g, "'")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+function optionAlreadyChosen(alreadySet, opt){
+  const key = canonicalOptionKey(opt);
+  for (const chosen of alreadySet) {
+    if (canonicalOptionKey(chosen) === key) return true;
+  }
+  return false;
+}
+function firstAvailableOption(opts, alreadySet){
+  return (opts || []).find(o => !optionAlreadyChosen(alreadySet, o)) || (opts || [])[0] || '';
+}
+function includesOptionCanonical(opts, value){
+  const key = canonicalOptionKey(value);
+  return (opts || []).some(o => canonicalOptionKey(o) === key);
+}
+function resolveOptionCanonical(opts, value){
+  const key = canonicalOptionKey(value);
+  return (opts || []).find(o => canonicalOptionKey(o) === key) || '';
+}
 function skillMeta(name){
   const map = {
     'Acrobatics':{
@@ -640,17 +666,97 @@ function featLinkNode(ft, fs={}){
   const html = featTooltipHtmlFromFeat(ft, fs);
   return html ? makeTooltipLink(ft.name, html, 'rulesLink featRulesLink') : document.createTextNode(ft?.name || 'Feat');
 }
+
+function classFeatureTooltip(idOrName, label){
+  if (typeof window.classFeatureTooltipHtml === 'function') return window.classFeatureTooltipHtml(idOrName, label);
+  return `<strong>${label || idOrName}</strong><br><em>Feature mechanics pending validation.</em>`;
+}
+function classFeatureLink(idOrName, label){
+  return makeTooltipLink(label || displayName(idOrName), classFeatureTooltip(idOrName, label), 'rulesLink classFeatureLink');
+}
+
+
+function speciesOptionAliasKey(feat, opt){
+  const base = canonicalOptionKey(opt).replace(/\s+/g, '_');
+  const id = String(feat?.id || '').toLowerCase();
+  const name = String(opt || '').toLowerCase();
+
+  if (id.includes('celestial_revelation')) {
+    if (name.includes('wing')) return 'heavenly_wings';
+    if (name.includes('radiant') || name.includes('inner')) return 'inner_radiance';
+    if (name.includes('necrotic') || name.includes('shroud')) return 'necrotic_shroud';
+  }
+  if (id.includes('draconic_ancestry')) return 'draconic_ancestry';
+  if (id.includes('elven_lineage')) {
+    if (name.includes('high')) return 'high_elf';
+    if (name.includes('drow')) return 'drow';
+    if (name.includes('wood')) return 'wood_elf';
+    return 'elven_lineage';
+  }
+  if (id.includes('gnomish_lineage')) {
+    if (name.includes('forest')) return 'forest_gnome';
+    if (name.includes('rock')) return 'rock_gnome';
+    return 'gnomish_lineage';
+  }
+  if (id.includes('giant_ancestry')) return 'giant_ancestry';
+  if (id.includes('fiendish_legacy')) {
+    if (name.includes('abyssal')) return 'abyssal';
+    if (name.includes('chthonic')) return 'chthonic';
+    if (name.includes('infernal')) return 'infernal';
+    return 'fiendish_legacy';
+  }
+  return base;
+}
+function speciesOptionTooltipHtml(feat, opt){
+  const alias = speciesOptionAliasKey(feat, opt);
+  if (typeof window.speciesFeatureTooltipHtml === 'function') return window.speciesFeatureTooltipHtml(alias, displayName(opt));
+  return `<strong>${displayName(opt)}</strong><br><em>Species option details pending validation.</em>`;
+}
+function speciesOptionLabelNode(feat, opt){
+  return makeTooltipLink(displayName(opt), speciesOptionTooltipHtml(feat, opt), 'rulesLink speciesFeatureLink');
+}
+
+
+function isClassFeatureOptionFamily(feat){
+  const fname = String(feat?.name || '').toLowerCase();
+  const fid = String(feat?.id || '').toLowerCase();
+  return fname.includes('metamagic') ||
+         fid.includes('metamagic') ||
+         fname.includes('invocation') ||
+         fid.includes('invocation') ||
+         fname.includes('maneuver') ||
+         fid.includes('maneuver') ||
+         fname.includes('fighting style') ||
+         fname.includes('style') ||
+         fid.includes('style');
+}
+
 function optionTooltipHtml(feat, opt){
   const fname=(feat.name||'').toLowerCase();
-  if (feat.scope === 'species' || (feat.id||'').includes('lineage') || (feat.id||'').includes('ancestry') || (feat.id||'').includes('legacy') || (feat.id||'').includes('revelation')) return speciesFeatureTooltip(opt, displayName(opt));
+  if (feat.scope === 'species' || (feat.id||'').includes('lineage') || (feat.id||'').includes('ancestry') || (feat.id||'').includes('legacy') || (feat.id||'').includes('revelation')) return speciesOptionTooltipHtml(feat, opt);
+  if (isClassFeatureOptionFamily(feat)) return classFeatureTooltip(opt, displayName(opt));
   if (feat.type === 'spellChoice' || fname.includes('spell') || fname.includes('cantrip')) return spellTooltipHtml(opt);
   if (fname.includes('skill') || fname.includes('expertise')) return skillTooltipHtml(opt);
   return '';
 }
 function optionLabelNode(feat, opt){
+  if (feat.scope === 'species' || (feat.id||'').includes('lineage') || (feat.id||'').includes('ancestry') || (feat.id||'').includes('legacy') || (feat.id||'').includes('revelation')) return speciesOptionLabelNode(feat, opt);
+  if (isClassFeatureOptionFamily(feat)) return classFeatureLink(opt, displayName(opt));
   const html = optionTooltipHtml(feat, opt);
-  return html ? makeTooltipLink(displayName(opt), html) : document.createTextNode(opt);
+  return html ? makeTooltipLink(displayName(opt), html) : document.createTextNode(displayName(opt));
 }
+
+function selectedOptionNode(feat, opt){
+  if (feat.scope === 'species' || (feat.id||'').includes('lineage') || (feat.id||'').includes('ancestry') || (feat.id||'').includes('legacy') || (feat.id||'').includes('revelation')) {
+    return speciesOptionLabelNode(feat, opt);
+  }
+  if (isClassFeatureOptionFamily(feat)) {
+    return classFeatureLink(opt, displayName(opt));
+  }
+  const html = optionTooltipHtml(feat, opt);
+  return html ? makeTooltipLink(displayName(opt), html) : document.createTextNode(displayName(opt));
+}
+
 function allowedOptionsForFeature(feat, lvl){
   let opts = feat.options || [];
   if (currentClass()?.id === 'warlock' && (feat.name||'').toLowerCase().includes('invocation')) {
@@ -671,7 +777,7 @@ function renderSpellList(feat){
 
 function init() {
   const select = $('classSelect');
-  PLANNER_DATA.classes.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.name; select.appendChild(o); });
+  PLANNER_DATA.classes.slice().sort((a,b)=>a.name.localeCompare(b.name,'en-US')).forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.name; select.appendChild(o); });
   const bgSel = $('backgroundSelect');
   (PLANNER_DATA.backgrounds||[]).forEach(b => { const o = document.createElement('option'); o.value=b.id; o.textContent=b.name; bgSel.appendChild(o); });
   const spSel = $('speciesSelect');
@@ -874,8 +980,7 @@ function renderFeature(lvl, feat){
   const head = document.createElement('div');
   head.className = 'featureHead';
   const title = document.createElement('strong');
-  if (feat.scope === 'species') title.appendChild(speciesFeatureLinkForFeature(feat));
-  else title.textContent = feat.name;
+  title.textContent = feat.name;
   const sm = document.createElement('small');
   sm.textContent = feat.scope==='species' ? 'species' : feat.type;
   head.appendChild(title);
@@ -898,23 +1003,24 @@ function renderFeature(lvl, feat){
       const opts = allowedOptionsForFeature(feat, lvl);
       opts.forEach(opt => {
         const o=document.createElement('option'); o.value=opt;
-        const used = already.has(opt);
+        const used = optionAlreadyChosen(already, opt);
         o.textContent = used ? `${opt} — already chosen` : opt;
         o.disabled = used;
         if (used) o.className='alreadyOption';
         sel.appendChild(o);
       });
       const saved = state.choices[id];
-      sel.value = opts.includes(saved) ? saved : (opts.find(o => !already.has(o)) || opts[0] || '');
-      if (sel.selectedOptions[0]?.disabled) sel.value = opts.find(o => !already.has(o)) || opts[0] || '';
+      sel.value = includesOptionCanonical(opts, saved) ? resolveOptionCanonical(opts, saved) : firstAvailableOption(opts, already);
+      if (sel.selectedOptions[0]?.disabled) sel.value = firstAvailableOption(opts, already);
       state.choices[id] = sel.value;
-      if (already.has(sel.value)) row.classList.add('alreadyChosen');
+      if (optionAlreadyChosen(already, sel.value)) row.classList.add('alreadyChosen');
       sel.addEventListener('change', e => { state.choices[id]=e.target.value; render(); });
       row.append(`Choice ${i+1}: `, sel);
       if (sel.value) {
         const preview=document.createElement('div');
-        preview.className='inlineSelectionDetails';
-        preview.appendChild(optionLabelNode(feat, sel.value));
+        preview.className='inlineSelectionDetails selectedOptionDetails';
+        preview.appendChild(document.createTextNode('Selected: '));
+        preview.appendChild(selectedOptionNode(feat, sel.value));
         row.appendChild(preview);
       }
       choice.appendChild(row);
@@ -939,10 +1045,10 @@ function renderFeature(lvl, feat){
         const already=globallyChosenOptions(lvl,'battle_master_maneuver',i);
         COMMON.maneuvers.forEach(opt=>{
           const o=document.createElement('option'); o.value=opt;
-          const used=already.has(opt); o.textContent=used?`${opt} — already chosen`:opt; o.disabled=used; sel.appendChild(o);
+          const used=optionAlreadyChosen(already,opt); o.textContent=used?`${opt} — already chosen`:opt; o.disabled=used; sel.appendChild(o);
         });
         const saved=state.choices[id];
-        sel.value=COMMON.maneuvers.includes(saved)?saved:(COMMON.maneuvers.find(o=>!already.has(o))||COMMON.maneuvers[0]);
+        sel.value=includesOptionCanonical(COMMON.maneuvers,saved)?resolveOptionCanonical(COMMON.maneuvers,saved):firstAvailableOption(COMMON.maneuvers,already);
         state.choices[id]=sel.value;
         sel.addEventListener('change', e=>{state.choices[id]=e.target.value; render();});
         row.append(`Maneuver ${i+1}: `, sel);
@@ -1257,7 +1363,7 @@ init();
     for(let lvl=2; lvl<=20; lvl++) ensureFeature(classId,lvl,makeSpellList(`${classId}_prepared_spell_reference_${lvl}`,'Prepared Spell Reference'));
   });
 
-  PLANNER_DATA.version = 'beta-0.1.119-en-us';
+  PLANNER_DATA.version = 'beta-0.1.127-en-us';
   PLANNER_DATA.note = 'beta 0.1.103 EN-US: rules data audit pass 1, Warlock spell progression fix, dynamic class spell lists, spell availability panels, Thirsting Blade gate preserved, feat/skill tooltip fallbacks improved.';
 })();
 
@@ -1325,7 +1431,7 @@ try { render(); } catch(e) { console.warn('beta 0.1.103 refresh skipped', e); }
 (function applyBeta_0_1_103(){
   // Version marker
   if (typeof PLANNER_DATA !== 'undefined') {
-    PLANNER_DATA.version = 'beta-0.1.119-en-us';
+    PLANNER_DATA.version = 'beta-0.1.127-en-us';
     PLANNER_DATA.note = 'beta 0.1.103 EN-US: Origin Feat level 1 choice menus, Hex damage dice tooltip fix, persistent/manual level collapse behavior.';
   }
 
@@ -1505,7 +1611,7 @@ try { render(); } catch(e) { console.warn('beta 0.1.103 refresh skipped', e); }
 // beta 0.1.109 EN-US — separated spell DB + invocation tooltip pass.
 (function applyBeta_0_1_105(){
   if (typeof PLANNER_DATA !== 'undefined') {
-    PLANNER_DATA.version = 'beta-0.1.119-en-us';
+    PLANNER_DATA.version = 'beta-0.1.127-en-us';
     PLANNER_DATA.note = 'beta 0.1.109 EN-US: consolidated spells_DB structure; spell stat blocks, class tags, planner dropdowns, and Spell Reference use one canonical offline file.';
   }
 
@@ -1812,7 +1918,7 @@ try { render(); } catch(e) { console.warn('beta 0.1.103 refresh skipped', e); }
   };
 
   if (typeof PLANNER_DATA !== 'undefined') {
-    PLANNER_DATA.version = 'beta-0.1.119-en-us';
+    PLANNER_DATA.version = 'beta-0.1.127-en-us';
     PLANNER_DATA.note = 'beta 0.1.109 EN-US: spells_DB.js is the only spell data source; both planner spell menus and Spell Reference tab read from the same offline registry.';
   }
 

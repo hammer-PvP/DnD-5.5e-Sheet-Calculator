@@ -1,28 +1,26 @@
-# Character Planner D&D 5.5e FULL — beta 0.1.119 EN-US
+# Character Planner D&D 5.5e FULL — beta 0.1.127 EN-US
 
-Portable local character planner. Open `character_planner.html` in a browser.
+Portable offline Character Planner for local browser use.
 
-## beta 0.1.119
+## How to use
 
-- Adds top tabs: Character Planner and Spell Reference.
-- Spell Reference is a quick table consult view.
-- Spell Reference is populated from the centralized canonical `spells_DB.js`.
-- Spells are grouped by class and spell level.
-- Spell names use the same mouseover tooltip/stat block system as the planner.
-- Keeps README cleanup rule: only this `README.md` remains.
+Open `character_planner.html` in a browser.
 
-## Versioning
+## Current DB structure
 
-Use numeric beta revisions: beta 0.1.119 through beta 0.1.119, then beta 0.2.000.
+- `data_core.js` — core planner data, classes, backgrounds, species list references, basic options.
+- `spells_DB.js` — canonical spell/cantrip database and class spell metadata.
+- `species_features_DB.js` — canonical species mechanical feature database.
+- `class_features_DB.js` — reusable non-spell feature database: invocations, metamagic, maneuvers, pact features, fighting styles, and future shared mechanics.
+- `subclasses_DB.js` — unified subclass progression/feature database. Do not split subclasses across multiple DB files.
+- `app.js` — planner rendering and UI logic.
+- `style.css` — planner styling.
+- `audit_reports/` — validation/audit reports.
 
+## DB rules
 
-## beta 0.1.119
-- Spell Reference class index refreshed for offline use.
-- Warlock and Paladin PHB 2024 spell lists expanded across all spell levels.
-- Overlapping spells can appear under every valid class while sharing one tooltip DB entry.
-
-
-## beta 0.1.119 EN-US
-- Consolidated `spell_db.js` and `spell_lists_2024.js` into one canonical offline file: `spells_DB.js`.
-- Planner spell dropdowns and Spell Reference tab both use the same spell registry.
-- Removed duplicate spell-list DB to avoid drift/bug loops.
+- Spells stay only in `spells_DB.js`.
+- Species traits stay only in `species_features_DB.js`.
+- Class/reusable features stay in `class_features_DB.js`.
+- Subclass progression stays in the unified `subclasses_DB.js`.
+- Subclasses can reference spells or reusable features, but should not duplicate their full data.
