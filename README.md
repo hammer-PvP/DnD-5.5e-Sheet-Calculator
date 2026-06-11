@@ -15,7 +15,6 @@ Open `character_planner.html` in a browser.
 - `subclasses_DB.js` — unified subclass progression/feature database. Do not split subclasses across multiple DB files.
 - `app.js` — planner rendering and UI logic.
 - `style.css` — planner styling.
-- `audit_reports/` — validation/audit reports.
 
 ## DB rules
 
